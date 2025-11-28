@@ -9,7 +9,8 @@
     html { font-size: 16px; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5; margin: 0; padding: 0; line-height: 1.5; transition: background 0.3s;
+      background: #ffffff; /* タブレットで周囲が薄グレーに見えないよう白に */
+      margin: 0; padding: 0; line-height: 1.5; transition: background 0.3s;
     }
     body.completed { background: #e8f5e9; }
     .container {
@@ -39,7 +40,12 @@
 
     .vas-section-note { font-size: .9rem; color: #555; margin-top: 4px; }
     .vas-container { margin-top: 16px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
-    .vas-label { font-size: .9rem; max-width: 8em; text-align: center; word-break: keep-all; }
+    .vas-label {
+      font-size: .9rem; max-width: 8em; text-align: center;
+      white-space: pre-line; /* 
+ を改行として反映 */
+      word-break: keep-all;
+    }
     .vas-line-wrapper { flex: 1 1 auto; display: flex; justify-content: center; }
     .vas-draw-area { position: relative; width: 10cm; max-width: 100%; height: 60px; margin: 8px 0; }
     .vas-line { position: absolute; left:0; right:0; top:50%; transform: translateY(-50%); height: 4px; background: #555; }
@@ -112,14 +118,14 @@
       background: #424242; color: #fff; border-radius: 20px; padding: 8px 12px; font-size: .9rem;
     }
     body.mobile-sim .vas-draw-area {
-      /* 画面横幅 × (10 / 15.7) */
-      width: calc(100vw * (10 / 15.7));
+      /* 画面横幅 × (10 / 15.2) */
+      width: calc(100vw * (10 / 15.2));
       max-width: 100%;
     }
     body.mobile-sim .vas-label {
       /* 見切れ防止：強めに折り返し */
       max-width: 30vw;
-      white-space: normal;
+      white-space: pre-line;
       overflow-wrap: anywhere;
       word-break: break-word;
     }
@@ -140,7 +146,9 @@
   <div class="container">
     <h1>OSA アンケート</h1>
     <div class="today-label">本日の日付：<span id="todayDate"></span></div>
-    <section class="page active" data-page-index="0">
+    <section class="page active"
+      data-page-index="0"
+      style="font-size:150%">
       <div class="page-label">ページ 1 / 3</div>
     <h2>OSA アンケート</h2>
           <div class="time-row block-time" data-block-id="time1">
@@ -169,7 +177,9 @@
             <input type="number" class="duration-hour" min="0" max="24" /> <span class="unit">時間</span>
             <input type="number" class="duration-minute" min="0" max="59" /> <span class="unit">分</span>
           </div>
-        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page" data-page-index="1">
+        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page"
+      data-page-index="1"
+      style="font-size:100%">
       <div class="page-label">ページ 2 / 3</div>
     
           <div class="vas-block" data-block-id="vas1">
@@ -198,7 +208,9 @@
 最悪の感覚</div>
             </div>
           </div>
-        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page" data-page-index="2">
+        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page"
+      data-page-index="2"
+      style="font-size:100%">
       <div class="page-label">ページ 3 / 3</div>
     
           <div class="questionnaire-block" data-block-id="osa1">
@@ -259,10 +271,18 @@
   </div>
 
   <script>
-    const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
+    const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}],"fontPercent":150},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
     const CSV_FILE_NAME = "osa_survey.csv";
 
     document.addEventListener("DOMContentLoaded", function () {
+      // オフライン時の更新確認ダイアログ
+      window.addEventListener("beforeunload", function (e) {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          e.returnValue = "オフラインです。ページを更新／移動しますか？";
+        }
+      });
+
       function addTapListener(element, handler) {
         let touchSupported = "ontouchstart" in window || navigator.maxTouchPoints > 0;
         let touchMoved = false;
@@ -468,7 +488,7 @@
             } else {
               const ratio = (xIntersect - minX) / widthPx;
               const distance = ratio * 100;
-              state.distanceMm = Number(distance.toFixed(1));
+              state.distanceMm = Number(distance.toFixed(1)); // 0.1mmまで
               state.normPoints = strokePoints.map(p => ({ x: p.x / canvas.width, y: p.y / canvas.height }));
             }
           }
@@ -569,7 +589,7 @@
         return valid;
       }
 
-      // 完了処理
+      // 完了後：トースト→リセット→先頭へ（ブラウザは閉じない）
       function resetSurveyToInitial() {
         const errorBox = document.getElementById("errorMessage"); if (errorBox) errorBox.textContent = "";
         document.querySelectorAll(".error-field").forEach(el => el.classList.remove("error-field"));
@@ -729,7 +749,7 @@
           const a = document.createElement("a"); a.href = url; a.download = downloadName;
           document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 
-          // ここから：閉じずにリセット＆トースト＆先頭へ
+          // 閉じずにトースト→リセット→1ページ目へ
           const toast = document.getElementById("completeToast");
           if (toast) { toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1600); }
           resetSurveyToInitial();
