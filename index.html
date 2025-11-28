@@ -7,151 +7,133 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     html { font-size: 16px; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #ffffff;
-      margin: 0; padding: 0; line-height: 1.5; transition: background 0.3s;
-    }
-    body.completed { background: #e8f5e9; }
-    .container {
-      max-width: 960px; margin: 0 auto; padding: 24px 16px 40px; background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: box-shadow .3s, border-color .3s; border: 2px solid transparent;
-    }
-    body.completed .container { border-color: #66bb6a; box-shadow: 0 0 0 2px rgba(102,187,106,.4); }
-    h1 { text-align: center; margin-bottom: 8px; font-size: 1.5rem; }
-    .today-label { text-align: center; font-size: .95rem; color: #555; margin-bottom: 16px; }
-    .today-label span { font-weight: 600; }
-    .page-label { font-size: .85rem; color: #666; text-align: right; margin-bottom: 4px; }
-    h2 { margin: 8px 0; font-size: 1.1rem; border-left: 4px solid #1976d2; padding-left: 8px; }
-    .page { display: none; } .page.active { display: block; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#fff; margin:0; padding:0; line-height:1.5; transition: background .3s; }
+    body.completed { background:#e8f5e9; }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 40px; background:#fff; }
+    h1 { text-align:center; margin-bottom:8px; font-size:1.5rem; }
+    .today-label { text-align:center; font-size:.95rem; color:#555; margin-bottom:16px; }
+    .today-label span { font-weight:600; }
+    .page-label { font-size:.85rem; color:#666; text-align:right; margin-bottom:4px; }
+    h2 { margin:8px 0; font-size:1.1rem; border-left:4px solid #1976d2; padding-left:8px; }
+    .page { display:none; } .page.active { display:block; }
 
-    .time-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
-    .time-row label { min-width: 14em; }
-    .time-date-label { font-size: .9rem; color: #555; margin-left: 4px; }
-    .am-pm-toggle {
-      min-width: 3rem; padding: 6px 10px; border-radius: 6px; border: 1px solid #999; cursor: pointer; font-size: 1rem;
-      text-align: center; user-select: none; transition: background .2s, color .2s, border-color .2s, box-shadow .2s; touch-action: manipulation;
-    }
-    .am-pm-toggle.am { background: #e3f2fd; color: #0d47a1; border-color: #64b5f6; }
-    .am-pm-toggle.pm { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
-    input[type="number"] { width: 4em; padding: 4px; font-size: 1rem; }
-    .unit { margin-right: 4px; }
+    /* 共通説明（ページ倍率に追従） */
+    .block-desc { font-size:.9em; color:#555; margin:6px 0 8px; white-space: pre-line; }
 
-    /* ===== VAS（ラベルと線を同一ライン・中央線・左右余白で折返し） ===== */
-    .vas-section-note { font-size: .9rem; color: #555; margin-top: 4px; }
-    .vas-container {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;       /* 横線高さにラベルもセンター合わせ */
-      justify-content: center;
-      flex-wrap: nowrap;         /* 一列固定：左ラベル | 線 | 右ラベル */
-      gap: 12px;
+    /* ===== 時刻／時間（ラベル→説明→入力（中央・大きめ）） ===== */
+    .time-row { margin-bottom:14px; }
+    .time-head { margin-bottom: 8px; }
+    .time-head label { display:block; font-weight:600; font-size:1em; }
+    .time-date-label{ font-size:.9em; color:#555; margin-left:4px; font-weight:normal; }
+    .time-controls{
+      display:flex; justify-content:center; align-items:center; gap:12px;
+      margin: 8px 0 6px; flex-wrap: wrap;
     }
-    .vas-label {
-      display: flex;
-      align-items: center;       /* テキストの縦中央を横線の高さに合わせる */
-      justify-content: center;
-      font-size: .9rem;
-      flex: 1 1 0;               /* 左右の余白を均等に使う */
-      min-width: 0;              /* はみ出し防止のために折返し許可 */
-      text-align: center;
-      white-space: pre-line;     /* ビルダーの改行をそのまま反映 */
-      overflow-wrap: anywhere;
-      word-break: break-word;
+    .time-controls .am-pm-toggle{
+      min-width:3.2rem; padding:10px 16px; border-radius:8px; border:1px solid #999; cursor:pointer;
+      font-size:1.2em; text-align:center; user-select:none; transition:background .2s, color .2s, border-color .2s, box-shadow .2s; touch-action:manipulation;
     }
-    .vas-line-wrapper {
-      flex: 0 0 auto;            /* 線のエリアは固定（ラベルに押されない） */
-      display: flex; align-items: center; justify-content: center;
+    .am-pm-toggle.am{ background:#e3f2fd; color:#0d47a1; border-color:#64b5f6; }
+    .am-pm-toggle.pm{ background:#ffebee; color:#b71c1c; border-color:#ef9a9a; }
+    .time-controls input[type="number"]{
+      width:5.2em; padding:8px 10px; font-size:1.25em; text-align:center;
+      border:1px solid #bbb; border-radius:8px;
     }
-    .vas-draw-area {
-      position: relative;
-      width: 10cm;               /* PC想定の既定幅（携帯表示では下のmobile-simで上書き） */
-      max-width: 100%;
-      height: 60px;
-      margin: 8px 0;
-    }
-    .vas-line {
-      position: absolute; left: 0; right: 0; top: 50%;
-      transform: translateY(-50%); height: 4px; background: #555;
-    }
-    .vas-line.active { box-shadow: none; background: #555; }
-    .vas-end { position: absolute; width:2px; height:20px; background:#555; top:50%; transform: translateY(-50%); }
-    .vas-end-left { left:0; } .vas-end-right { right:0; }
-    canvas.vas-canvas { position:absolute; top:0; left:0; width:100%; height:100%; touch-action: none; }
-    .vas-helper-text { font-size: .9rem; color:#555; text-align:center; margin-top: 8px; }
+    .time-controls .unit{ font-size:1.1em; }
 
-    table.likert { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .95rem; }
-    table.likert th, table.likert td { border: 1px solid #ccc; padding: 6px; }
-    table.likert th.question-text { width: 26%; text-align: left; background: #fafafa; }
-    table.likert th.question-end { width: 20%; text-align: left; background: #fafafa; }
-    table.likert td.likert-cell {
-      width: 9%; text-align: center; cursor: pointer; user-select: none;
-      transition: background .15s, color .15s; touch-action: manipulation;
+    /* ===== VAS（ページ共通ガイド、ラベルと線は同一ラインに） ===== */
+    .vas-page-helper{ font-size:.9em; color:#555; text-align:center; margin:8px 0; }
+    .vas-section-note{ font-size:.9em; color:#555; margin:6px 0 8px; }
+    .vas-container{ margin-top:16px; display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:12px; }
+    .vas-label{
+      display:flex; align-items:center; justify-content:center; font-size:1em;
+      flex:1 1 0; min-width:0; text-align:center; white-space: pre-line; overflow-wrap:anywhere; word-break:break-word;
     }
-    table.likert td.likert-cell:hover { background: #eee; }
-    table.likert td.likert-cell.selected { background: #1976d2; color:#fff; font-weight: 600; }
-    tr.likert-row-error th, tr.likert-row-error td { background: #ffebee !important; }
+    .vas-line-wrapper{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+    .vas-draw-area{ position:relative; width:10cm; max-width:100%; height:60px; margin:8px 0; }
+    .vas-line{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:4px; background:#555; }
+    .vas-line.active{ box-shadow:none; background:#555; }
+    .vas-end{ position:absolute; width:2px; height:20px; background:#555; top:50%; transform: translateY(-50%); }
+    .vas-end-left{ left:0; } .vas-end-right{ right:0; }
+    canvas.vas-canvas{ position:absolute; top:0; left:0; width:100%; height:100%; touch-action:none; }
 
-    .text-block { margin-bottom: 12px; }
-    .text-label { display:block; margin-bottom: 4px; font-size: .95rem; }
-    .text-input { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 6px; }
-    .text-input.textarea { min-height: 80px; resize: vertical; }
-
-    .export-area { margin-top:16px; }
-    .nav-buttons { margin-top: 16px; display:flex; flex-wrap:wrap; gap:12px; justify-content: space-between; }
-    button {
-      padding: 10px 18px; font-size:1rem; border-radius:6px; border:none; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,.15);
-      transition: background .2s, transform .1s, box-shadow .1s; touch-action: manipulation;
+    .vas-start-btn{
+      display:block; margin:10px auto 0; padding:10px 18px;
+      background:#2e7d32; color:#fff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15);
+      font-size:1em; transition: background .2s, transform .1s, box-shadow .1s;
     }
-    .btn-next { background:#1976d2; color:#fff; } .btn-next:hover { background:#1565c0; }
-    .btn-back { background:#9e9e9e; color:#fff; } .btn-back:hover { background:#757575; }
-    #completeBtn { background:#43a047; color:#fff; } #completeBtn:hover { background:#388e3c; }
-    button:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-    .note { margin-top: 8px; font-size: .85rem; color:#666; }
-    .error-message { margin-top: 8px; font-size: .9rem; color:#b71c1c; }
-    .error-message ul { margin: 4px 0 0 1.2em; padding: 0; }
-    .error-field { border:2px solid #e53935 !important; background:#ffebee !important; }
+    .vas-start-btn:hover{ background:#256c2a; }
+
+    /* ===== 質問票 ===== */
+    .questionnaire-block{ margin-bottom:10px; }
+    .questionnaire-block h2 { font-size:1.1em; }
+    table.likert{ width:100%; border-collapse:collapse; margin-top:8px; font-size:.95em; }
+    table.likert th, table.likert td{ border:1px solid #ccc; padding:6px; }
+    table.likert th.question-text{ width:26%; text-align:left; background:#fafafa; font-size:1em; }
+    table.likert th.question-end{ width:20%; text-align:left; background:#fafafa; font-size:1em; }
+    table.likert td.likert-cell{
+      width:9%; text-align:center; cursor:pointer; user-select:none; transition: background .15s, color .15s; touch-action: manipulation; font-size:1em;
+    }
+    table.likert td.likert-cell:hover{ background:#eee; }
+    table.likert td.likert-cell.selected{ background:#1976d2; color:#fff; font-weight:600; }
+    tr.likert-row-error th, tr.likert-row-error td{ background:#ffebee !important; }
+
+    /* 問題ブロックの後ろが詰まるのを少し広めに */
+    .questionnaire-block + .time-row,
+    .questionnaire-block + .text-block { margin-top: 16px; }
+
+    /* ===== 自由記述 ===== */
+    .text-block{ margin-bottom:12px; }
+    .text-label{ display:block; margin-bottom:4px; font-size:1em; }
+    .text-input{ width:100%; box-sizing:border-box; font-size:1em; padding:6px; }
+    .text-input.textarea{ min-height:80px; resize:vertical; }
+
+    /* 共通ボタンなど */
+    .export-area{ margin-top:16px; }
+    .nav-buttons{ margin-top:16px; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; }
+    button{ padding:10px 18px; font-size:1rem; border-radius:6px; border:none; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15); transition: background .2s, transform .1s, box-shadow .1s; touch-action:manipulation; }
+    .btn-next{ background:#1976d2; color:#fff; } .btn-next:hover{ background:#1565c0; }
+    .btn-back{ background:#9e9e9e; color:#fff; } .btn-back:hover{ background:#757575; }
+    #completeBtn{ background:#43a047; color:#fff; } #completeBtn:hover{ background:#388e3c; }
+    button:active{ transform: translateY(1px); box-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .note{ margin-top:8px; font-size:.85rem; color:#666; }
+    .error-message{ margin-top:8px; font-size:.9rem; color:#b71c1c; }
+    .error-message ul{ margin:4px 0 0 1.2em; padding:0; }
+    .error-field{ border:2px solid #e53935 !important; background:#ffebee !important; }
 
     /* 縦向き注意（VASページのみ） */
-    .orientation-warning {
-      position: fixed; inset: 0; display:none; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.35); z-index: 9999; pointer-events: auto;
+    .orientation-warning{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:9999; pointer-events:auto; }
+    .orientation-warning-box{
+      background:#fff; padding:16px 20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.25);
+      max-width:320px; margin:0 16px; text-align:center; font-size:.95rem; line-height:1.6;
     }
-    .orientation-warning-box {
-      background:#fff; padding:16px 20px; border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      max-width:320px; margin:0 16px; text-align: center; font-size:.95rem; line-height:1.6;
-    }
-    @media (max-width: 1024px) and (orientation: portrait) {
-      body.vas-page .orientation-warning { display:flex; }
+    @media (max-width:1024px) and (orientation:portrait){ body.vas-page .orientation-warning{ display:flex; } }
+
+    /* 600px以下（VASは横一列維持） */
+    @media (max-width:600px){
+      html{ font-size:18px; }
+      .container{ padding:16px 12px 32px; }
+      table.likert th, table.likert td{ padding:10px 4px; }
+      button{ width:100%; justify-content:center; }
+      .nav-buttons{ flex-direction:column; }
+      .vas-container{ flex-direction: row !important; }
+      .vas-line-wrapper{ width:100%; }
+      .vas-draw-area{ width:100%; }
     }
 
-    /* 600px以下の基本レイアウト調整（※VASは横一列維持） */
-    @media (max-width: 600px) {
-      html { font-size: 18px; }
-      .container { padding: 16px 12px 32px; }
-      .time-row label { min-width: auto; flex-basis: 100%; }
-      table.likert th, table.likert td { padding: 10px 4px; }
-      button { width: 100%; justify-content: center; }
-      .nav-buttons { flex-direction: column; }
-      .vas-container { flex-direction: row !important; } /* ← 縦積み禁止 */
-      .vas-line-wrapper { width: 100%; }
-      .vas-draw-area { width: 100%; }
-    }
-
-    /* ===== 常に携帯表示（mobile-sim）を適用 ===== */
-    body.mobile-sim .vas-draw-area {
-      /* 画面横幅 × (10 / 15.2) */
+    /* ずっと携帯表示 + VAS長さ 10/15.2 */
+    body.mobile-sim .vas-draw-area{
       width: calc(100vw * (10 / 15.2));
       max-width: 100%;
     }
 
     /* 完了トースト */
-    #completeToast {
-      position: fixed; left: 50%; top: 16px; transform: translateX(-50%);
-      background: #323232; color: #fff; padding: 10px 14px; border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25); z-index: 10000; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    #completeToast{
+      position: fixed; left:50%; top:16px; transform: translateX(-50%);
+      background:#323232; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.25);
+      z-index:10000; opacity:0; pointer-events:none; transition: opacity .2s ease;
     }
-    #completeToast.show { opacity: 1; }
+    #completeToast.show{ opacity:1; }
   </style>
 </head>
 <body>
@@ -160,53 +142,59 @@
   <div class="container">
     <h1>OSA アンケート</h1>
     <div class="today-label">本日の日付：<span id="todayDate"></span></div>
-    <section class="page active"
-      data-page-index="0"
-      style="font-size:100%">
+    <section class="page active" data-page-index="0" style="font-size:150%">
       <div class="page-label">ページ 1 / 3</div>
     <h2>OSA アンケート</h2>
           <div class="time-row block-time" data-block-id="time1">
-            <label>
-              ① 昨夜、お休みになった時刻
-              <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
-            </label>
-            <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
-            <input type="number" class="time-hour" min="0" max="11" /> <span class="unit">時</span>
-            <input type="number" class="time-minute" min="0" max="59" /> <span class="unit">分ごろ</span>
+            <div class="time-head">
+              <label>
+                ① 昨夜、お休みになった時刻
+                <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
+              </label>
+              
+            </div>
+            <div class="time-controls">
+              <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
+              <input type="number" class="time-hour" min="0" max="11" /> <span class="unit">時</span>
+              <input type="number" class="time-minute" min="0" max="59" /> <span class="unit">分ごろ</span>
+            </div>
           </div>
         
           <div class="time-row block-time" data-block-id="time2">
-            <label>
-              ② 今朝、目覚めた時刻
-              <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
-            </label>
-            <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
-            <input type="number" class="time-hour" min="0" max="11" /> <span class="unit">時</span>
-            <input type="number" class="time-minute" min="0" max="59" /> <span class="unit">分ごろ</span>
+            <div class="time-head">
+              <label>
+                ② 今朝、目覚めた時刻
+                <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
+              </label>
+              
+            </div>
+            <div class="time-controls">
+              <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
+              <input type="number" class="time-hour" min="0" max="11" /> <span class="unit">時</span>
+              <input type="number" class="time-minute" min="0" max="59" /> <span class="unit">分ごろ</span>
+            </div>
           </div>
         
           <div class="time-row block-duration" data-block-id="duration1">
-            <label>③ 昨夜の睡眠時間</label>
-            <span class="unit">およそ</span>
-            <input type="number" class="duration-hour" min="0" max="24" /> <span class="unit">時間</span>
-            <input type="number" class="duration-minute" min="0" max="59" /> <span class="unit">分</span>
+            <div class="time-head">
+              <label>③ 昨夜の睡眠時間</label>
+              
+            </div>
+            <div class="time-controls">
+              <span class="unit">およそ</span>
+              <input type="number" class="duration-hour" min="0" max="24" />
+              <span class="unit">時間</span>
+              <input type="number" class="duration-minute" min="0" max="59" />
+              <span class="unit">分</span>
+            </div>
           </div>
-        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page"
-      data-page-index="1"
-      style="font-size:100%">
+        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page" data-page-index="1" style="font-size:100%">
       <div class="page-label">ページ 2 / 3</div>
-    
+    <div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
           <div class="vas-block" data-block-id="vas1">
             <h2>VAS</h2>
-            <p class="vas-section-note">
-              今の状態について、左側を「疲れを
-全く感じない
-最良の感覚」、右側を「何もできないほど疲れ切った
-最悪の感覚」として、
-              下の横線をまたぐように線を1本引いてください。
-            </p>
+            
             <button type="button" class="vas-start-btn">入力を始める</button>
-            <div class="vas-helper-text">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
             <div class="vas-container">
               <div class="vas-label vas-label-left">疲れを
 全く感じない
@@ -224,13 +212,31 @@
 最悪の感覚</div>
             </div>
           </div>
-        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page"
-      data-page-index="2"
-      style="font-size:100%">
+        
+          <div class="vas-block" data-block-id="vas2">
+            <h2>VAS</h2>
+            
+            <button type="button" class="vas-start-btn">入力を始める</button>
+            <div class="vas-container">
+              <div class="vas-label vas-label-left">左側のラベル</div>
+              <div class="vas-line-wrapper">
+                <div class="vas-draw-area">
+                  <div class="vas-line">
+                    <div class="vas-end vas-end-left"></div>
+                    <div class="vas-end vas-end-right"></div>
+                  </div>
+                  <canvas class="vas-canvas"></canvas>
+                </div>
+              </div>
+              <div class="vas-label vas-label-right">右側のラベル</div>
+            </div>
+          </div>
+        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page" data-page-index="2" style="font-size:140%">
       <div class="page-label">ページ 3 / 3</div>
     
           <div class="questionnaire-block" data-block-id="osa1">
             <h2>OSA 質問票</h2>
+            
             <table class="likert">
               <thead>
                 <tr>
@@ -267,9 +273,26 @@
               <td class="likert-cell" data-block-id="osa1" data-question-index="1" data-choice-index="3">
                 非常に
               </td>
-            <th class="question-end">眠りが深かった</th></tr></tbody></table></div>
-          <div class="text-block" data-block-id="text2">
+            <th class="question-end">眠りが深かった</th></tr><tr data-question-index="2"><th class="question-text">新しい設問</th>
+              <td class="likert-cell" data-block-id="osa1" data-question-index="2" data-choice-index="0">
+                非常に
+              </td>
+            
+              <td class="likert-cell" data-block-id="osa1" data-question-index="2" data-choice-index="1">
+                やや
+              </td>
+            
+              <td class="likert-cell" data-block-id="osa1" data-question-index="2" data-choice-index="2">
+                やや
+              </td>
+            
+              <td class="likert-cell" data-block-id="osa1" data-question-index="2" data-choice-index="3">
+                非常に
+              </td>
+            <th class="question-end">反対の状態</th></tr></tbody></table></div>
+          <div class="text-block" data-block-id="text3">
             <label class="text-label">自由記述</label>
+            
             <textarea class="text-input textarea"></textarea>
           </div>
         <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="1">戻る</button><button type="button" id="completeBtn">完了する</button></div>
@@ -292,236 +315,186 @@
   </div>
 
   <script>
-    const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを\n全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]},{"id":"text2","type":"text","label":"自由記述","multiline":true,"required":false}]}]};
+    const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}],"fontPercent":150},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを\n全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true},{"id":"vas2","type":"vas","labelLeft":"左側のラベル","labelRight":"右側のラベル","required":true,"showDescription":true,"description":""}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"},{"left":"新しい設問","right":"反対の状態"}]},{"id":"text3","type":"text","label":"自由記述","multiline":true,"required":false,"showDescription":false,"description":""}],"fontPercent":140}]};
     const CSV_FILE_NAME = "osa_survey.csv";
 
     document.addEventListener("DOMContentLoaded", function () {
-      // 常に携帯表示（mobile-sim）を適用
+      // ずっと携帯表示
       document.body.classList.add("mobile-sim");
 
-      // オフライン時の更新確認ダイアログ
+      // オフライン更新警告
       window.addEventListener("beforeunload", function (e) {
-        if (!navigator.onLine) {
-          e.preventDefault();
-          e.returnValue = "オフラインです。ページを更新／移動しますか？";
-        }
+        if (!navigator.onLine) { e.preventDefault(); e.returnValue = "オフラインです。ページを更新／移動しますか？"; }
       });
 
       function addTapListener(element, handler) {
         let touchSupported = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-        let touchMoved = false;
-        let lastTouchTime = 0;
+        let touchMoved = false, lastTouchTime = 0;
         if (touchSupported) {
-          element.addEventListener("touchstart", function () { touchMoved = false; });
-          element.addEventListener("touchmove", function () { touchMoved = true; });
-          element.addEventListener("touchend", function (e) {
-            if (!touchMoved) { lastTouchTime = Date.now(); handler(e); }
-          });
+          element.addEventListener("touchstart", ()=>{ touchMoved=false; });
+          element.addEventListener("touchmove", ()=>{ touchMoved=true; });
+          element.addEventListener("touchend", (e)=>{ if(!touchMoved){ lastTouchTime=Date.now(); handler(e); } });
         }
-        element.addEventListener("click", function (e) {
-          if (Date.now() - lastTouchTime < 500) return;
-          handler(e);
-        });
+        element.addEventListener("click", (e)=>{ if(Date.now()-lastTouchTime<500) return; handler(e); });
       }
 
-      function formatDateLocal(d) {
-        const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2,"0"); const day = String(d.getDate()).padStart(2,"0");
-        return y + "-" + m + "-" + day;
-      }
-      function formatDateTimeLocal(d) {
-        const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2,"0"); const day = String(d.getDate()).padStart(2,"0");
-        const hh = String(d.getHours()).padStart(2,"0"); const mi = String(d.getMinutes()).padStart(2,"0"); const ss = String(d.getSeconds()).padStart(2,"0");
-        return y + "-" + m + "-" + day + " " + hh + ":" + mi + ":" + ss;
-      }
+      function formatDateLocal(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
+      function formatDateTimeLocal(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); const hh=String(d.getHours()).padStart(2,"0"); const mi=String(d.getMinutes()).padStart(2,"0"); const ss=String(d.getSeconds()).padStart(2,"0"); return y+"-"+m+"-"+day+" "+hh+":"+mi+":"+ss; }
 
       const today = new Date();
       const answerDateStr = formatDateLocal(today);
-      const lastNight = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      const lastNight = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
       const lastNightStr = formatDateLocal(lastNight);
       const todayEl = document.getElementById("todayDate");
       if (todayEl) todayEl.textContent = answerDateStr;
 
       const pages = Array.from(document.querySelectorAll(".page"));
       let currentPageIndex = 0;
-
-      function pageHasVAS(index) {
-        const page = surveyConfig.pages[index]; if (!page) return false;
-        return page.blocks.some(b => b.type === "vas");
-      }
-      function showPage(idx) {
+      function pageHasVAS(index){ const page=surveyConfig.pages[index]; return !!(page && page.blocks.some(b=>b.type==="vas")); }
+      function showPage(idx){
         pages.forEach((p,i)=>{ if(i===idx) p.classList.add("active"); else p.classList.remove("active"); });
         currentPageIndex = idx;
         if (pageHasVAS(idx)) document.body.classList.add("vas-page"); else document.body.classList.remove("vas-page");
         window.scrollTo({ top: 0, behavior: "smooth" });
-        // VASのキャンバスを安全にリサイズ
-        document.querySelectorAll(".vas-block").forEach(blockEl => {
-          if (blockEl.__vasResize) blockEl.__vasResize();
-        });
+        document.querySelectorAll(".vas-block").forEach(blockEl => { if (blockEl.__vasResize) blockEl.__vasResize(); });
       }
 
-      // ページ移動（clickのみ）
-      document.querySelectorAll(".nav-prev").forEach(btn => {
-        btn.addEventListener("click", function () { const t = parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); });
-      });
-      document.querySelectorAll(".nav-next").forEach(btn => {
-        btn.addEventListener("click", function () { const t = parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); });
-      });
+      document.querySelectorAll(".nav-prev").forEach(btn => btn.addEventListener("click", ()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); }));
+      document.querySelectorAll(".nav-next").forEach(btn => btn.addEventListener("click", ()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); }));
 
-      function findBlockConfigById(id) {
-        for (const p of surveyConfig.pages) { const b = p.blocks.find(bb => bb.id === id); if (b) return b; }
-        return null;
-      }
+      function findBlockConfigById(id){ for(const p of surveyConfig.pages){ const b=p.blocks.find(bb=>bb.id===id); if(b) return b; } return null; }
 
-      // 時刻ブロック
-      document.querySelectorAll(".block-time").forEach(function (rowEl) {
-        const blockId = rowEl.dataset.blockId;
-        const cfg = findBlockConfigById(blockId) || {};
-        const toggleBtn = rowEl.querySelector(".am-pm-toggle");
-        const dateLabelSpan = rowEl.querySelector("[data-role='date-label']");
-        function updateDateLabel() {
-          if (!dateLabelSpan) return;
-          if (cfg.adjustDateOnAm) {
-            const isAM = toggleBtn.dataset.value === "AM";
-            dateLabelSpan.textContent = isAM ? answerDateStr : lastNightStr;
-          } else {
-            dateLabelSpan.textContent = answerDateStr;
-          }
+      // 時刻
+      document.querySelectorAll(".block-time").forEach((rowEl)=>{
+        const blockId=rowEl.dataset.blockId;
+        const cfg=findBlockConfigById(blockId) || {};
+        const toggleBtn=rowEl.querySelector(".am-pm-toggle");
+        const dateLabelSpan=rowEl.querySelector("[data-role='date-label']");
+        function updateDateLabel(){
+          if(!dateLabelSpan) return;
+          if (cfg.adjustDateOnAm){ const isAM = toggleBtn.dataset.value === "AM"; dateLabelSpan.textContent = isAM ? answerDateStr : lastNightStr; }
+          else { dateLabelSpan.textContent = answerDateStr; }
         }
-        if (toggleBtn) {
-          addTapListener(toggleBtn, function () {
-            if (toggleBtn.dataset.value === "AM") {
-              toggleBtn.dataset.value = "PM"; toggleBtn.textContent = "午後"; toggleBtn.classList.remove("am"); toggleBtn.classList.add("pm");
-            } else {
-              toggleBtn.dataset.value = "AM"; toggleBtn.textContent = "午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am");
-            }
+        if (toggleBtn){
+          addTapListener(toggleBtn, function(){
+            if (toggleBtn.dataset.value === "AM"){ toggleBtn.dataset.value="PM"; toggleBtn.textContent="午後"; toggleBtn.classList.remove("am"); toggleBtn.classList.add("pm"); }
+            else { toggleBtn.dataset.value="AM"; toggleBtn.textContent="午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am"); }
             updateDateLabel();
           });
         }
         updateDateLabel();
       });
 
-      // ====== VAS ======
-      const vasStates = {}; // blockId: { distanceMm, normPoints }
-      function setupVASBlock(blockEl) {
-        const blockId = blockEl.dataset.blockId;
-        const startBtn = blockEl.querySelector(".vas-start-btn");
-        const helperText = blockEl.querySelector(".vas-helper-text");
-        const line = blockEl.querySelector(".vas-line");
-        const container = blockEl.querySelector(".vas-container");
-        const drawArea = blockEl.querySelector(".vas-draw-area");
-        const canvas = blockEl.querySelector("canvas.vas-canvas");
-        if (!startBtn || !helperText || !line || !container || !drawArea || !canvas) return;
+      // VAS
+      const vasStates = {};
+      function setupVASBlock(blockEl){
+        const blockId=blockEl.dataset.blockId;
+        const startBtn=blockEl.querySelector(".vas-start-btn");
+        const line=blockEl.querySelector(".vas-line");
+        const container=blockEl.querySelector(".vas-container");
+        const drawArea=blockEl.querySelector(".vas-draw-area");
+        const canvas=blockEl.querySelector("canvas.vas-canvas");
+        if(!startBtn||!line||!container||!drawArea||!canvas) return;
 
-        const ctx = canvas.getContext("2d");
-        let strokePoints = [];
-        let isDrawing = false, isActive = false, lastPoint = null;
+        /* ページ共通ヘルパー要素（1ページ1つ） */
+        const pageEl = blockEl.closest('.page');
+        const helperText = pageEl ? pageEl.querySelector('.vas-page-helper') : null;
 
-        if (!vasStates[blockId]) vasStates[blockId] = { distanceMm: null, normPoints: null };
-        const state = vasStates[blockId];
+        const ctx=canvas.getContext("2d");
+        let strokePoints=[], isDrawing=false, isActive=false, lastPoint=null;
 
-        function redrawFromNorm() {
-          if (!state.normPoints || state.normPoints.length < 2) return;
+        if(!vasStates[blockId]) vasStates[blockId]={ distanceMm:null, normPoints:null };
+        const state=vasStates[blockId];
+
+        function redrawFromNorm(){
+          if(!state.normPoints || state.normPoints.length<2) return;
           ctx.clearRect(0,0,canvas.width,canvas.height);
-          ctx.lineWidth = 2; ctx.strokeStyle = "#e53935"; ctx.lineCap = "round";
+          ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round";
           ctx.beginPath();
-          const first = state.normPoints[0];
-          let px = first.x * canvas.width, py = first.y * canvas.height;
-          ctx.moveTo(px, py);
-          for (let i=1;i<state.normPoints.length;i++){
-            const p = state.normPoints[i];
-            const cx = p.x * canvas.width, cy = p.y * canvas.height;
-            const midX = (px + cx)/2, midY = (py + cy)/2;
-            ctx.quadraticCurveTo(px, py, midX, midY);
-            px = cx; py = cy;
+          const first=state.normPoints[0];
+          let px=first.x*canvas.width, py=first.y*canvas.height;
+          ctx.moveTo(px,py);
+          for(let i=1;i<state.normPoints.length;i++){
+            const p=state.normPoints[i];
+            const cx=p.x*canvas.width, cy=p.y*canvas.height;
+            const midX=(px+cx)/2, midY=(py+cy)/2;
+            ctx.quadraticCurveTo(px,py,midX,midY);
+            px=cx; py=cy;
           }
           ctx.stroke(); ctx.closePath();
         }
-
-        function resizeCanvas() {
-          const rect = drawArea.getBoundingClientRect();
-          if (rect.width === 0 || rect.height === 0) return;
-          canvas.width = rect.width; canvas.height = rect.height;
+        function resizeCanvas(){
+          const rect=drawArea.getBoundingClientRect();
+          if(rect.width===0 || rect.height===0) return;
+          canvas.width=rect.width; canvas.height=rect.height;
           redrawFromNorm();
         }
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
-        window.addEventListener("orientationchange", function(){ setTimeout(resizeCanvas, 200); });
+        window.addEventListener("orientationchange", ()=>setTimeout(resizeCanvas,200));
         window.addEventListener("pageshow", resizeCanvas);
-        blockEl.__vasResize = resizeCanvas;
+        blockEl.__vasResize=resizeCanvas;
 
-        addTapListener(startBtn, function () {
-          isActive = true; line.classList.add("active"); container.classList.remove("error-field");
-          ctx.clearRect(0,0,canvas.width,canvas.height);
-          strokePoints = []; lastPoint = null;
-          startBtn.textContent = "入力中...";
-          helperText.textContent = "横線をまたぐように、線を1本引いてください。";
+        addTapListener(startBtn, function(){
+          isActive=true; line.classList.add("active"); container.classList.remove("error-field");
+          ctx.clearRect(0,0,canvas.width,canvas.height); strokePoints=[]; lastPoint=null;
+          startBtn.textContent="入力中...";
+          if (helperText) helperText.textContent = "横線をまたぐように、線を1本引いてください。";
         });
 
-        function getCanvasPos(evt) {
-          const rect = canvas.getBoundingClientRect();
-          return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-        }
+        function getCanvasPos(evt){ const rect=canvas.getBoundingClientRect(); return { x:evt.clientX-rect.left, y:evt.clientY-rect.top }; }
 
-        canvas.addEventListener("pointerdown", function (evt) {
-          if (!isActive) return;
-          evt.preventDefault(); isDrawing = true; strokePoints = [];
-          ctx.clearRect(0,0,canvas.width,canvas.height);
-          const p = getCanvasPos(evt); strokePoints.push(p); lastPoint = p;
-          ctx.lineWidth = 2; ctx.strokeStyle = "#e53935"; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(p.x,p.y);
+        canvas.addEventListener("pointerdown", function(evt){
+          if(!isActive) return; evt.preventDefault(); isDrawing=true; strokePoints=[]; ctx.clearRect(0,0,canvas.width,canvas.height);
+          const p=getCanvasPos(evt); strokePoints.push(p); lastPoint=p;
+          ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(p.x,p.y);
         });
-
-        canvas.addEventListener("pointermove", function (evt) {
-          if (!isDrawing) return;
-          evt.preventDefault();
-          const p = getCanvasPos(evt); strokePoints.push(p);
-          const midX = (lastPoint.x + p.x)/2, midY = (lastPoint.y + p.y)/2;
-          ctx.quadraticCurveTo(lastPoint.x, lastPoint.y, midX, midY); ctx.stroke();
-          lastPoint = p;
+        canvas.addEventListener("pointermove", function(evt){
+          if(!isDrawing) return; evt.preventDefault();
+          const p=getCanvasPos(evt); strokePoints.push(p);
+          const midX=(lastPoint.x+p.x)/2, midY=(lastPoint.y+p.y)/2;
+          ctx.quadraticCurveTo(lastPoint.x,lastPoint.y,midX,midY); ctx.stroke(); lastPoint=p;
         });
+        function finishStroke(evt){
+          if(!isDrawing) return; evt.preventDefault(); isDrawing=false; ctx.closePath();
 
-        function finishStroke(evt) {
-          if (!isDrawing) return;
-          evt.preventDefault(); isDrawing = false; ctx.closePath();
-
-          if (strokePoints.length < 2) {
-            helperText.textContent = "線が短すぎます。もう一度、横線をまたぐように線を引いてください。";
+          if(strokePoints.length<2){
+            if (helperText) helperText.textContent = "線が短すぎます。もう一度、横線をまたぐように線を引いてください。";
             return;
           }
 
-          const canvasRect = canvas.getBoundingClientRect();
-          const lineRect = line.getBoundingClientRect();
-          const lineY = (lineRect.top + lineRect.height/2) - canvasRect.top;
-          const minX = lineRect.left - canvasRect.left;
-          const maxX = lineRect.right - canvasRect.left;
+          const canvasRect=canvas.getBoundingClientRect();
+          const lineRect=line.getBoundingClientRect();
+          const lineY=(lineRect.top+lineRect.height/2)-canvasRect.top;
+          const minX=lineRect.left-canvasRect.left, maxX=lineRect.right-canvasRect.left;
 
-          let xs = [];
-          for (let i=1;i<strokePoints.length;i++){
-            const p1 = strokePoints[i-1], p2 = strokePoints[i];
-            if ((p1.y <= lineY && p2.y >= lineY) || (p1.y >= lineY && p2.y <= lineY)) {
-              if (p1.y === p2.y) continue;
-              const t = (lineY - p1.y) / (p2.y - p1.y);
-              const x = p1.x + (p2.x - p1.x) * t;
-              if (x >= minX && x <= maxX) xs.push(x);
+          let xs=[];
+          for(let i=1;i<strokePoints.length;i++){
+            const p1=strokePoints[i-1], p2=strokePoints[i];
+            if((p1.y<=lineY && p2.y>=lineY) || (p1.y>=lineY && p2.y<=lineY)){
+              if(p1.y===p2.y) continue;
+              const t=(lineY-p1.y)/(p2.y-p1.y);
+              const x=p1.x+(p2.x-p1.x)*t;
+              if(x>=minX && x<=maxX) xs.push(x);
             }
           }
-          if (xs.length === 0) {
-            helperText.textContent = "横線と交わるように線を引いてください。もう一度お試しください。";
+          if(xs.length===0){
+            if (helperText) helperText.textContent = "横線と交わるように線を引いてください。もう一度お試しください。";
           } else {
-            const xIntersect = xs[xs.length - 1];
-            const widthPx = maxX - minX;
-            if (widthPx <= 0) {
-              helperText.textContent = "線の取得でエラーが起きました。もう一度お試しください。";
+            const xIntersect=xs[xs.length-1];
+            const widthPx=maxX-minX;
+            if(widthPx<=0){
+              if (helperText) helperText.textContent = "線の取得でエラーが起きました。もう一度お試しください。";
             } else {
-              const ratio = (xIntersect - minX) / widthPx;
-              const distance = ratio * 100;
-              vasStates[blockId].distanceMm = Number(distance.toFixed(1)); // 0.1mm
-              vasStates[blockId].normPoints = strokePoints.map(p => ({ x: p.x / canvas.width, y: p.y / canvas.height }));
+              const ratio=(xIntersect-minX)/widthPx;
+              const distance=ratio*100;
+              state.distanceMm=Number(distance.toFixed(1));
+              state.normPoints=strokePoints.map(p=>({ x:p.x/canvas.width, y:p.y/canvas.height }));
+              if (helperText) helperText.textContent = "線の入力が完了しました。必要に応じて「修正する」で書き直してください。";
             }
           }
-
-          isActive = false; line.classList.remove("active");
-          startBtn.textContent = "修正する";
-          helperText.textContent = "線の入力が完了しました。必要に応じて「修正する」で書き直してください。";
+          isActive=false; line.classList.remove("active");
+          startBtn.textContent="修正する";
           redrawFromNorm();
         }
         canvas.addEventListener("pointerup", finishStroke);
@@ -530,75 +503,57 @@
       document.querySelectorAll(".vas-block").forEach(setupVASBlock);
 
       // 質問票
-      document.querySelectorAll(".likert-cell").forEach(function (cell) {
-        addTapListener(cell, function () {
-          const blockId = cell.dataset.blockId, qIndex = cell.dataset.questionIndex;
-          const selector = '.likert-cell[data-block-id="' + blockId + '"][data-question-index="' + qIndex + '"]';
-          document.querySelectorAll(selector).forEach(c => c.classList.remove("selected"));
+      document.querySelectorAll(".likert-cell").forEach((cell)=>{
+        addTapListener(cell, function(){
+          const blockId=cell.dataset.blockId, qIndex=cell.dataset.questionIndex;
+          const selector='.likert-cell[data-block-id="'+blockId+'"][data-question-index="'+qIndex+'"]';
+          document.querySelectorAll(selector).forEach(c=>c.classList.remove("selected"));
           cell.classList.add("selected");
-          const tr = cell.closest("tr"); if (tr) tr.classList.remove("likert-row-error");
+          const tr=cell.closest("tr"); if(tr) tr.classList.remove("likert-row-error");
         });
       });
 
-      const errorBox = document.getElementById("errorMessage");
-      function clearErrors() {
-        if (errorBox) errorBox.textContent = "";
-        document.querySelectorAll(".error-field").forEach(el => el.classList.remove("error-field"));
-        document.querySelectorAll(".likert-row-error").forEach(tr => tr.classList.remove("likert-row-error"));
+      const errorBox=document.getElementById("errorMessage");
+      function clearErrors(){
+        if(errorBox) errorBox.textContent="";
+        document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
+        document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
       }
-      function isRequired(block) { return block.required !== false; }
+      function isRequired(block){ return block.required !== false; }
+      function validateAll(){
+        clearErrors(); const messages=[]; let valid=true;
+        function markError(el,msg){ if(el) el.classList.add("error-field"); messages.push(msg); valid=false; }
 
-      function validateAll() {
-        clearErrors();
-        const messages = []; let valid = true;
-        function markError(el, msg) { if (el) el.classList.add("error-field"); messages.push(msg); valid = false; }
-
-        surveyConfig.pages.forEach((page) => {
-          page.blocks.forEach((block) => {
-            if (block.type === "time") {
-              const rowEl = document.querySelector('.block-time[data-block-id="' + block.id + '"]');
-              if (!rowEl) return;
-              const hour = rowEl.querySelector(".time-hour");
-              const min = rowEl.querySelector(".time-minute");
-              if (isRequired(block)) {
-                if (!hour || !hour.value) markError(hour, (block.label || "時刻") + "（時）が未入力です。");
-                if (!min || !min.value) markError(min, (block.label || "時刻") + "（分）が未入力です。");
-              }
-            } else if (block.type === "duration") {
-              const rowEl = document.querySelector('.block-duration[data-block-id="' + block.id + '"]');
-              if (!rowEl) return;
-              const hour = rowEl.querySelector(".duration-hour");
-              const min = rowEl.querySelector(".duration-minute");
-              if (isRequired(block)) {
-                if (!hour || !hour.value) markError(hour, (block.label || "時間") + "（時間）が未入力です。");
-                if (!min || !min.value) markError(min, (block.label || "時間") + "（分）が未入力です。");
-              }
-            } else if (block.type === "vas") {
-              const blockEl = document.querySelector('.vas-block[data-block-id="' + block.id + '"]');
-              const container = blockEl && blockEl.querySelector(".vas-container");
-              const state = vasStates[block.id];
-              if (isRequired(block) && (!state || state.distanceMm == null)) {
-                if (container) markError(container, "VAS が未入力です。");
-              }
-            } else if (block.type === "text") {
-              const blockEl = document.querySelector('.text-block[data-block-id="' + block.id + '"]');
-              if (!blockEl) return;
-              const inputEl = blockEl.querySelector(".text-input");
-              if (isRequired(block) && (!inputEl || !inputEl.value.trim())) {
-                markError(inputEl, (block.label || "自由記述") + " が未入力です。");
-              }
-            } else if (block.type === "questionnaire") {
-              const qBlockEl = document.querySelector('.questionnaire-block[data-block-id="' + block.id + '"]');
-              if (!qBlockEl) return;
-              if (isRequired(block)) {
-                (block.questions || []).forEach((q, qIndex) => {
-                  const selector = '.likert-cell[data-block-id="' + block.id + '"][data-question-index="' + qIndex + '"].selected';
-                  const selected = document.querySelector(selector);
-                  if (!selected) {
-                    const tr = qBlockEl.querySelector('tr[data-question-index="' + qIndex + '"]');
-                    if (tr) tr.classList.add("likert-row-error");
-                    messages.push((q.left || "設問 " + (qIndex + 1)) + " が未選択です。");
-                    valid = false;
+        surveyConfig.pages.forEach((page)=>{
+          page.blocks.forEach((block)=>{
+            if(block.type==="time"){
+              const rowEl=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!rowEl) return;
+              const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
+              if(isRequired(block)){ if(!hour || !hour.value) markError(hour,(block.label||"時刻")+"（時）が未入力です。"); if(!min || !min.value) markError(min,(block.label||"時刻")+"（分）が未入力です。"); }
+            } else if(block.type==="duration"){
+              const rowEl=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!rowEl) return;
+              const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
+              if(isRequired(block)){ if(!hour || !hour.value) markError(hour,(block.label||"時間")+"（時間）が未入力です。"); if(!min || !min.value) markError(min,(block.label||"時間")+"（分）が未入力です。"); }
+            } else if(block.type==="vas"){
+              const blockEl=document.querySelector('.vas-block[data-block-id="'+block.id+'"]');
+              const container=blockEl && blockEl.querySelector(".vas-container");
+              const state=vasStates[block.id];
+              if(isRequired(block) && (!state || state.distanceMm==null)){ if(container) markError(container, "VAS が未入力です。"); }
+            } else if(block.type==="text"){
+              const blockEl=document.querySelector('.text-block[data-block-id="'+block.id+'"]'); if(!blockEl) return;
+              const inputEl=blockEl.querySelector(".text-input");
+              if(isRequired(block) && (!inputEl || !inputEl.value.trim())){ markError(inputEl,(block.label||"自由記述")+" が未入力です。"); }
+            } else if(block.type==="questionnaire"){
+              const qBlockEl=document.querySelector('.questionnaire-block[data-block-id="'+block.id+'"]'); if(!qBlockEl) return;
+              if(isRequired(block)){
+                (block.questions||[]).forEach((q,qIndex)=>{
+                  const selector='.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qIndex+'"].selected';
+                  const selected=document.querySelector(selector);
+                  if(!selected){
+                    const tr=qBlockEl.querySelector('tr[data-question-index="'+qIndex+'"]');
+                    if(tr) tr.classList.add("likert-row-error");
+                    messages.push((q.left||"設問 "+(qIndex+1)) + " が未選択です。");
+                    valid=false;
                   }
                 });
               }
@@ -606,186 +561,151 @@
           });
         });
 
-        if (!valid && messages.length > 0 && errorBox) {
-          const ul = document.createElement("ul");
-          messages.forEach(m => { const li = document.createElement("li"); li.textContent = m; ul.appendChild(li); });
-          errorBox.innerHTML = ""; errorBox.appendChild(ul);
-          errorBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if(!valid && messages.length>0 && errorBox){
+          const ul=document.createElement("ul"); messages.forEach(m=>{ const li=document.createElement("li"); li.textContent=m; ul.appendChild(li); });
+          errorBox.innerHTML=""; errorBox.appendChild(ul); errorBox.scrollIntoView({ behavior:"smooth", block:"nearest" });
         }
         return valid;
       }
 
-      // 完了後：トースト→リセット→先頭へ
-      function resetSurveyToInitial() {
-        const errorBox = document.getElementById("errorMessage"); if (errorBox) errorBox.textContent = "";
-        document.querySelectorAll(".error-field").forEach(el => el.classList.remove("error-field"));
-        document.querySelectorAll(".likert-row-error").forEach(tr => tr.classList.remove("likert-row-error"));
+      function resetSurveyToInitial(){
+        const errorBox=document.getElementById("errorMessage"); if(errorBox) errorBox.textContent="";
+        document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
+        document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
 
-        // 時刻
-        document.querySelectorAll(".block-time").forEach(rowEl => {
-          const toggleBtn = rowEl.querySelector(".am-pm-toggle");
-          const hourInput = rowEl.querySelector(".time-hour");
-          const minuteInput = rowEl.querySelector(".time-minute");
-          if (toggleBtn) { toggleBtn.dataset.value = "AM"; toggleBtn.textContent = "午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am"); }
-          if (hourInput) hourInput.value = "";
-          if (minuteInput) minuteInput.value = "";
-          const dateLabelSpan = rowEl.querySelector("[data-role='date-label']");
-          const today = new Date();
-          const answerDateStr = formatDateLocal(today);
-          if (dateLabelSpan) dateLabelSpan.textContent = answerDateStr;
+        document.querySelectorAll(".block-time").forEach(rowEl=>{
+          const toggleBtn=rowEl.querySelector(".am-pm-toggle");
+          const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
+          if(toggleBtn){ toggleBtn.dataset.value="AM"; toggleBtn.textContent="午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am"); }
+          if(hour) hour.value=""; if(min) min.value="";
+          const dateLabelSpan=rowEl.querySelector("[data-role='date-label']");
+          const today=new Date(); const answerDateStr=formatDateLocal(today); if(dateLabelSpan) dateLabelSpan.textContent=answerDateStr;
         });
 
-        // 時間
-        document.querySelectorAll(".block-duration").forEach(rowEl => {
-          const hour = rowEl.querySelector(".duration-hour");
-          const min = rowEl.querySelector(".duration-minute");
-          if (hour) hour.value = ""; if (min) min.value = "";
+        document.querySelectorAll(".block-duration").forEach(rowEl=>{
+          const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
+          if(hour) hour.value=""; if(min) min.value="";
         });
 
-        // VAS
-        document.querySelectorAll(".vas-block").forEach(blockEl => {
-          const canvas = blockEl.querySelector("canvas.vas-canvas");
-          const btn = blockEl.querySelector(".vas-start-btn");
-          const helper = blockEl.querySelector(".vas-helper-text");
-          const line = blockEl.querySelector(".vas-line");
-          if (canvas) { const ctx = canvas.getContext("2d"); ctx.clearRect(0,0,canvas.width,canvas.height); }
-          if (line) line.classList.remove("active");
-          if (btn) btn.textContent = "入力を始める";
-          if (helper) helper.textContent = "「入力を始める」を押してから、横線をまたぐように線を引いてください。";
-          const id = blockEl.dataset.blockId;
-          // 既存のVAS状態もクリア
-          const vs = document.querySelectorAll(".vas-block");
-          vs.forEach(vb => {
-            const bid = vb.dataset.blockId;
-            if (bid && vasStates[bid]) { vasStates[bid].distanceMm = null; vasStates[bid].normPoints = null; }
-          });
-          if (blockEl.__vasResize) blockEl.__vasResize();
+        document.querySelectorAll(".vas-block").forEach(blockEl=>{
+          const canvas=blockEl.querySelector("canvas.vas-canvas");
+          const btn=blockEl.querySelector(".vas-start-btn");
+          const line=blockEl.querySelector(".vas-line");
+          if(canvas){ const ctx=canvas.getContext("2d"); ctx.clearRect(0,0,canvas.width,canvas.height); }
+          if(line) line.classList.remove("active");
+          if(btn) btn.textContent="入力を始める";
+          const vs=document.querySelectorAll(".vas-block");
+          vs.forEach(vb=>{ const bid=vb.dataset.blockId; if(bid && vasStates[bid]){ vasStates[bid].distanceMm=null; vasStates[bid].normPoints=null; } });
+          if(blockEl.__vasResize) blockEl.__vasResize();
         });
 
-        // 自由記述
-        document.querySelectorAll(".text-block .text-input").forEach(el => el.value = "");
+        /* ページ共通ヘルパーを初期文言に戻す */
+        document.querySelectorAll(".vas-page-helper").forEach(el=>{
+          el.textContent = "「入力を始める」を押してから、横線をまたぐように線を引いてください。";
+        });
 
-        // 質問票
-        document.querySelectorAll(".likert-cell.selected").forEach(cell => cell.classList.remove("selected"));
-
+        document.querySelectorAll(".text-block .text-input").forEach(el=>el.value="");
+        document.querySelectorAll(".likert-cell.selected").forEach(cell=>cell.classList.remove("selected"));
         document.body.classList.remove("completed");
       }
 
-      const completeBtn = document.getElementById("completeBtn");
-      if (completeBtn) {
-        addTapListener(completeBtn, function () {
-          if (!validateAll()) return;
+      const completeBtn=document.getElementById("completeBtn");
+      if(completeBtn){
+        addTapListener(completeBtn, function(){
+          if(!validateAll()) return;
 
-          const answers = {};
-          answers.answer_datetime = formatDateTimeLocal(new Date());
-          answers.answer_date = answerDateStr;
+          const answers={};
+          answers.answer_datetime=formatDateTimeLocal(new Date());
+          answers.answer_date=answerDateStr;
 
-          surveyConfig.pages.forEach((page) => {
-            page.blocks.forEach((block) => {
-              if (block.type === "time") {
-                const rowEl = document.querySelector('.block-time[data-block-id="' + block.id + '"]');
-                if (!rowEl) return;
-                const toggleBtn = rowEl.querySelector(".am-pm-toggle");
-                const hourInput = rowEl.querySelector(".time-hour");
-                const minuteInput = rowEl.querySelector(".time-minute");
-                const ampm = toggleBtn ? toggleBtn.dataset.value : "";
-                let dateValue = answerDateStr;
-                if (block.adjustDateOnAm) { dateValue = (ampm === "AM") ? answerDateStr : lastNightStr; }
-                answers[block.id + "_date"] = dateValue;
-                answers[block.id + "_ampm"] = ampm;
-                answers[block.id + "_hour"] = hourInput ? (hourInput.value || "") : "";
-                answers[block.id + "_minute"] = minuteInput ? (minuteInput.value || "") : "";
-              } else if (block.type === "duration") {
-                const rowEl = document.querySelector('.block-duration[data-block-id="' + block.id + '"]');
-                if (!rowEl) return;
-                const hourInput = rowEl.querySelector(".duration-hour");
-                const minuteInput = rowEl.querySelector(".duration-minute");
-                answers[block.id + "_hour"] = hourInput ? (hourInput.value || "") : "";
-                answers[block.id + "_minute"] = minuteInput ? (minuteInput.value || "") : "";
-              } else if (block.type === "vas") {
-                const state = vasStates[block.id];
-                answers[block.id + "_VAS_mm"] = state && state.distanceMm != null ? state.distanceMm : "";
-              } else if (block.type === "text") {
-                const blockEl = document.querySelector('.text-block[data-block-id="' + block.id + '"]');
-                const inputEl = blockEl && blockEl.querySelector(".text-input");
-                answers[block.id + "_text"] = inputEl ? inputEl.value : "";
-              } else if (block.type === "questionnaire") {
-                (block.questions || []).forEach((q, qIndex) => {
-                  const selector = '.likert-cell[data-block-id="' + block.id + '"][data-question-index="' + qIndex + '"].selected';
-                  const selected = document.querySelector(selector);
-                  if (!selected) { answers[block.id + "_Q" + (qIndex + 1)] = ""; }
-                  else {
-                    const choiceIndex = parseInt(selected.dataset.choiceIndex, 10);
-                    answers[block.id + "_Q" + (qIndex + 1)] = String(choiceIndex + 1);
-                  }
+          surveyConfig.pages.forEach((page)=>{
+            page.blocks.forEach((block)=>{
+              if(block.type==="time"){
+                const rowEl=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!rowEl) return;
+                const toggleBtn=rowEl.querySelector(".am-pm-toggle");
+                const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
+                const ampm=toggleBtn ? toggleBtn.dataset.value : "";
+                let dateValue=answerDateStr;
+                if(block.adjustDateOnAm){ dateValue=(ampm==="AM")?answerDateStr:lastNightStr; }
+                answers[block.id+"_date"]=dateValue;
+                answers[block.id+"_ampm"]=ampm;
+                answers[block.id+"_hour"]=hour ? (hour.value||"") : "";
+                answers[block.id+"_minute"]=min ? (min.value||"") : "";
+              } else if(block.type==="duration"){
+                const rowEl=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!rowEl) return;
+                const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
+                answers[block.id+"_hour"]=hour ? (hour.value||"") : "";
+                answers[block.id+"_minute"]=min ? (min.value||"") : "";
+              } else if(block.type==="vas"){
+                const state=vasStates[block.id];
+                answers[block.id+"_VAS_mm"]=state && state.distanceMm!=null ? state.distanceMm : "";
+              } else if(block.type==="text"){
+                const blockEl=document.querySelector('.text-block[data-block-id="'+block.id+'"]');
+                const inputEl=blockEl && blockEl.querySelector(".text-input");
+                answers[block.id+"_text"]=inputEl ? inputEl.value : "";
+              } else if(block.type==="questionnaire"){
+                (block.questions||[]).forEach((q,qIndex)=>{
+                  const selector='.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qIndex+'"].selected';
+                  const selected=document.querySelector(selector);
+                  if(!selected){ answers[block.id+"_Q"+(qIndex+1)]=""; }
+                  else{ const choiceIndex=parseInt(selected.dataset.choiceIndex,10); answers[block.id+"_Q"+(qIndex+1)]=String(choiceIndex+1); }
                 });
               }
             });
           });
 
-          const headerLabels = ["回答日時_詳細(ローカル)","回答日"];
-          const keys = ["answer_datetime","answer_date"];
-
-          surveyConfig.pages.forEach((page) => {
-            page.blocks.forEach((block) => {
-              if (block.type === "time") {
-                headerLabels.push(block.id + "_日付", block.id + "_午前午後(AM/PM)", block.id + "_時(0-11)", block.id + "_分");
-                keys.push(block.id + "_date", block.id + "_ampm", block.id + "_hour", block.id + "_minute");
-              } else if (block.type === "duration") {
-                headerLabels.push(block.id + "_時間", block.id + "_分");
-                keys.push(block.id + "_hour", block.id + "_minute");
-              } else if (block.type === "vas") {
-                headerLabels.push(block.id + "_VAS_距離_mm(0-100)");
-                keys.push(block.id + "_VAS_mm");
-              } else if (block.type === "text") {
-                headerLabels.push(block.id + "_自由記述");
-                keys.push(block.id + "_text");
-              } else if (block.type === "questionnaire") {
-                (block.questions || []).forEach((q, qIndex) => {
-                  headerLabels.push(block.id + "_Q" + (qIndex + 1) + "(1〜" + ((block.choices && block.choices.length) || 0) + ")");
-                  keys.push(block.id + "_Q" + (qIndex + 1));
+          const headerLabels=["回答日時_詳細(ローカル)","回答日"];
+          const keys=["answer_datetime","answer_date"];
+          surveyConfig.pages.forEach((page)=>{
+            page.blocks.forEach((block)=>{
+              if(block.type==="time"){
+                headerLabels.push(block.id+"_日付", block.id+"_午前午後(AM/PM)", block.id+"_時(0-11)", block.id+"_分");
+                keys.push(block.id+"_date", block.id+"_ampm", block.id+"_hour", block.id+"_minute");
+              } else if(block.type==="duration"){
+                headerLabels.push(block.id+"_時間", block.id+"_分");
+                keys.push(block.id+"_hour", block.id+"_minute");
+              } else if(block.type==="vas"){
+                headerLabels.push(block.id+"_VAS_距離_mm(0-100)");
+                keys.push(block.id+"_VAS_mm");
+              } else if(block.type==="text"){
+                headerLabels.push(block.id+"_自由記述");
+                keys.push(block.id+"_text");
+              } else if(block.type==="questionnaire"){
+                (block.questions||[]).forEach((q,qIndex)=>{
+                  headerLabels.push(block.id+"_Q"+(qIndex+1)+"(1〜"+((block.choices&&block.choices.length)||0)+")");
+                  keys.push(block.id+"_Q"+(qIndex+1));
                 });
               }
             });
           });
 
-          const STORAGE_KEY = "osa_survey_rows_v1";
-          let stored = localStorage.getItem(STORAGE_KEY);
-          let allRows;
-          if (stored) { try { allRows = JSON.parse(stored); if (!Array.isArray(allRows)) allRows = []; } catch(e){ allRows = []; } }
-          else { allRows = []; }
+          const STORAGE_KEY="osa_survey_rows_v1";
+          let stored=localStorage.getItem(STORAGE_KEY); let allRows;
+          if(stored){ try{ allRows=JSON.parse(stored); if(!Array.isArray(allRows)) allRows=[]; }catch(e){ allRows=[]; } }
+          else { allRows=[]; }
 
-          const currentRow = keys.map(function (k) {
-            const v = answers[k] == null ? "" : String(answers[k]);
-            if (v.includes(",") || v.includes('"') || v.includes("\n")) return '"' + v.replace(/"/g, '""') + '"';
+          const currentRow = keys.map(k=>{
+            const v = answers[k]==null ? "" : String(answers[k]);
+            if (v.includes(",") || v.includes('"') || v.includes("\n")) return '"' + v.replace(/"/g,'""') + '"';
             return v;
           });
-
           allRows.push(currentRow);
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allRows)); } catch(e){}
+          try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(allRows)); }catch(e){}
 
-          const csvRows = []; csvRows.push(headerLabels.join(","));
-          allRows.forEach(function (row) { csvRows.push(row.join(",")); });
+          const csvRows=[]; csvRows.push(headerLabels.join(",")); allRows.forEach(row=>csvRows.push(row.join(",")));
+          const csvContent="\uFEFF"+csvRows.join("\r\n");
+          const blob=new Blob([csvContent], { type:"text/csv;charset=utf-8;" });
+          const url=URL.createObjectURL(blob);
 
-          const csvContent = "\uFEFF" + csvRows.join("\r\n");
-          const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
+          const baseName=CSV_FILE_NAME || "osa_survey.csv";
+          const now=new Date(); const hh=String(now.getHours()).padStart(2,"0"); const mm2=String(now.getMinutes()).padStart(2,"0"); const ss=String(now.getSeconds()).padStart(2,"0");
+          const stamp=answerDateStr+"_"+hh+mm2+ss;
+          const downloadName=baseName.replace(/\.csv$/i,"")+"_"+stamp+".csv";
 
-          const baseName = CSV_FILE_NAME || "osa_survey.csv";
-          const now = new Date();
-          const hh = String(now.getHours()).padStart(2,"0");
-          const mm2 = String(now.getMinutes()).padStart(2,"0");
-          const ss = String(now.getSeconds()).padStart(2,"0");
-          const stamp = answerDateStr + "_" + hh + mm2 + ss;
-          const downloadName = baseName.replace(/\.csv$/i,"") + "_" + stamp + ".csv";
+          const a=document.createElement("a"); a.href=url; a.download=downloadName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 
-          const a = document.createElement("a"); a.href = url; a.download = downloadName;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-
-          const toast = document.getElementById("completeToast");
-          if (toast) { toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1600); }
-          resetSurveyToInitial();
-          showPage(0);
+          const toast=document.getElementById("completeToast"); if(toast){ toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),1600); }
+          resetSurveyToInitial(); showPage(0);
         });
       }
 
