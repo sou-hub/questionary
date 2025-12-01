@@ -2,1121 +2,734 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>OSA アンケート</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    html { font-size: 16px; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#fff; margin:0; padding:0; line-height:1.5; transition: background .3s; }
-    body.completed { background:#e8f5e9; }
-    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 40px; background:#fff; }
-    h1 { text-align:center; margin-bottom:8px; font-size:1.5rem; }
-    .today-label { text-align:center; font-size:.95rem; color:#555; margin-bottom:16px; }
-    .today-label span { font-weight:600; }
-    .page-label { font-size:.85rem; color:#666; text-align:right; margin-bottom:4px; }
-    h2 { margin:8px 0; font-size:1.1rem; border-left:4px solid #1976d2; padding-left:8px; }
-    .page { display:none; } .page.active { display:block; }
+<meta charset="UTF-8" />
+<title>OSA アンケート</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  html { font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#fff; margin:0; padding:0; line-height:1.5; transition: background .3s; }
+  body.completed { background:#e8f5e9; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 40px; background:#fff; }
+  h1 { text-align:center; margin-bottom:8px; font-size:1.5rem; }
+  .today-label { text-align:center; font-size:.95rem; color:#555; margin-bottom:16px; }
+  .page-label { font-size:.85rem; color:#666; text-align:right; margin-bottom:4px; }
+  h2 { margin:8px 0; font-size:1.1rem; border-left:4px solid #1976d2; padding-left:8px; }
+  .page { display:none; } .page.active { display:block; }
 
-    /* 共通説明（ページ倍率に追従） */
-    .block-desc { font-size:.9em; color:#555; margin:6px 0 8px; white-space: pre-line; }
+  .block-desc { font-size:.9em; color:#555; margin:6px 0 8px; white-space: pre-line; } /* ←説明は pre-line で 
+ を改行に */
 
-    /* ===== 時刻／時間（ラベル→説明→入力（中央・大きめ）） ===== */
-    .time-row { margin-bottom:14px; }
-    .time-head { margin-bottom: 8px; }
-    .time-head label { display:block; font-weight:600; font-size:1em; }
-    .time-date-label{ font-size:.9em; color:#555; margin-left:4px; font-weight:normal; }
-    .time-controls{
-      display:flex; justify-content:center; align-items:center; gap:12px;
-      margin: 8px 0 6px; flex-wrap: wrap;
-    }
-    .time-controls .am-pm-toggle{
-      min-width:3.2rem; padding:10px 16px; border-radius:8px; border:1px solid #999; cursor:pointer;
-      font-size:1.2em; text-align:center; user-select:none; transition:background .2s, color .2s, border-color .2s, box-shadow .2s; touch-action:manipulation;
-    }
-    .am-pm-toggle.am{ background:#e3f2fd; color:#0d47a1; border-color:#64b5f6; }
-    .am-pm-toggle.pm{ background:#ffebee; color:#b71c1c; border-color:#ef9a9a; }
+  /* 時刻/時間 */
+  .time-row { margin-bottom:14px; }
+  .time-head { margin-bottom: 8px; }
+  .time-head label { display:block; font-weight:600; font-size:1em; }
+  .time-date-label{ font-size:.9em; color:#555; margin-left:4px; font-weight:normal; }
+  .time-controls{ display:flex; justify-content:center; align-items:center; gap:12px; margin:8px 0 6px; flex-wrap: wrap; }
+  .am-pm-toggle{ min-width:3.2rem; padding:10px 16px; border-radius:8px; border:1px solid #999; cursor:pointer; font-size:1.2em; user-select:none; transition:.2s; }
+  .am-pm-toggle.am{ background:#e3f2fd; color:#0d47a1; border-color:#64b5f6; }
+  .am-pm-toggle.pm{ background:#ffebee; color:#b71c1c; border-color:#ef9a9a; }
+  .time-controls select{ min-width:5.6em; padding:8px 10px; font-size:1.25em; text-align:center; border:1px solid #bbb; border-radius:8px; appearance:auto; }
+  .time-controls .unit{ font-size:1.1em; }
 
-    /* ← 入力は select のみ（キーボード入力なし） */
-    .time-controls select{
-      min-width:5.6em; padding:8px 10px; font-size:1.25em; text-align:center;
-      border:1px solid #bbb; border-radius:8px; appearance:auto;
-    }
-    .time-controls .unit{ font-size:1.1em; }
+  /* VAS */
+  .vas-page-helper{ font-size:.9em; color:#555; text-align:center; margin:8px 0; }
+  .vas-container{ margin-top:16px; display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:12px; }
+  .vas-label{ display:flex; align-items:center; justify-content:center; font-size:1em; flex:1 1 0; min-width:0; text-align:center; overflow-wrap:anywhere; word-break:break-word; }
+  .vas-line-wrapper{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  .vas-draw-area{ position:relative; width:10cm; max-width:100%; height:60px; margin:8px 0; } /* JSで上書き（10cm相当） */
+  .vas-line{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:4px; background:#555; }
+  .vas-end{ position:absolute; width:2px; height:20px; background:#555; top:50%; transform: translateY(-50%); }
+  .vas-end-left{ left:0; } .vas-end-right{ right:0; }
+  canvas.vas-canvas{ position:absolute; top:0; left:0; width:100%; height:100%; touch-action:none; }
+  .vas-start-btn{ display:block; margin:10px auto 0; padding:10px 18px; background:#2e7d32; color:#fff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15); font-size:1em; transition:.2s; }
 
-    /* ===== VAS（ページ共通ガイド、ラベルと線は同一ラインに） ===== */
-    .vas-page-helper{ font-size:.9em; color:#555; text-align:center; margin:8px 0; }
-    .vas-section-note{ font-size:.9em; color:#555; margin:6px 0 8px; }
-    .vas-container{ margin-top:16px; display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:12px; }
-    .vas-label{
-      display:flex; align-items:center; justify-content:center; font-size:1em;
-      flex:1 1 0; min-width:0; text-align:center; white-space: pre-line; overflow-wrap:anywhere; word-break:break-word;
-    }
-    .vas-line-wrapper{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
-    .vas-draw-area{ position:relative; width:10cm; max-width:100%; height:60px; margin:8px 0; }
-    .vas-line{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:4px; background:#555; }
-    .vas-line.active{ box-shadow:none; background:#555; }
-    .vas-end{ position:absolute; width:2px; height:20px; background:#555; top:50%; transform: translateY(-50%); }
-    .vas-end-left{ left:0; } .vas-end-right{ right:0; }
-    canvas.vas-canvas{ position:absolute; top:0; left:0; width:100%; height:100%; touch-action:none; }
+  /* 質問票・自由記述・ボタンなど */
+  /* 質問票テーブルの基本 */
+  table.likert{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    font-size:.95em;
+    table-layout: fixed;
+  }
+  table.likert th, table.likert td{
+    border:1px solid #ccc;
+    padding:6px;
+    vertical-align: middle;
+  }
 
-    .vas-start-btn{
-      display:block; margin:10px auto 0; padding:10px 18px;
-      background:#2e7d32; color:#fff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15);
-      font-size:1em; transition: background .2s, transform .1s, box-shadow .1s;
-    }
-    .vas-start-btn:hover{ background:#256c2a; }
+  /* 左右の見出しセル */
+  table.likert th.question-text{ width:26%; text-align:left; background:#fafafa; }
+  table.likert th.question-end { width:20%; text-align:left; background:#fafafa; }
 
-    /* ===== 質問票 ===== */
-    .questionnaire-block{ margin-bottom:10px; }
-    .questionnaire-block h2 { font-size:1.1em; }
-    table.likert{ width:100%; border-collapse:collapse; margin-top:8px; font-size:.95em; }
-    table.likert th, table.likert td{ border:1px solid #ccc; padding:6px; }
-    table.likert th.question-text{ width:26%; text-align:left; background:#fafafa; font-size:1em; }
-    table.likert th.question-end{ width:20%; text-align:left; background:#fafafa; font-size:1em; }
-    table.likert td.likert-cell{
-      width:9%; text-align:center; cursor:pointer; user-select:none; transition: background .15s, color .15s; touch-action: manipulation; font-size:1em;
-    }
-    table.likert td.likert-cell:hover{ background:#eee; }
-    table.likert td.likert-cell.selected{ background:#1976d2; color:#fff; font-weight:600; }
-    tr.likert-row-error th, tr.likert-row-error td{ background:#ffebee !important; }
+  /* ▶ 改行(
+)をそのまま表示させる、長文は折り返し */
+  .cell-wrap{
+    white-space: pre-line;     /* 
+ は改行、連続空白は畳む */
+    overflow-wrap:anywhere;
+    word-break: break-word;
+  }
 
-    /* 問題ブロックの後ろが詰まるのを少し広めに */
-    .questionnaire-block + .time-row,
-    .questionnaire-block + .text-block { margin-top: 16px; }
+  /* 数字モードでも小さく見えないように調整 */
+  td.likert-cell.number-mode .cell-wrap{
+    font-size: 1.1em;
+    font-weight: 700;
+  }
 
-    /* ===== 自由記述 ===== */
-    .text-block{ margin-bottom:12px; }
-    .text-label{ display:block; margin-bottom:4px; font-size:1em; }
-    .text-input{ width:100%; box-sizing:border-box; font-size:1em; padding:6px; }
-    .text-input.textarea{ min-height:80px; resize:vertical; }
+  /* ヘッダーは“選択肢ラベル”のまま強調（数字モードでも数字にしない） */
+  th.choice-head{
+    background:#e3f2fd;
+    color:#0d47a1;
+    font-weight:700;
+    text-align:center;
+  }
+  /* セルの見た目・選択 */
+  td.likert-cell{
+    text-align:center;
+    cursor:pointer;
+    user-select:none;
+    transition:.15s;
+    touch-action: manipulation;
+  }
+  td.likert-cell.selected{
+    background:#1976d2;
+    color:#fff;
+    font-weight:600;
+  }
 
-    /* 共通ボタンなど */
-    .export-area{ margin-top:16px; }
-    .nav-buttons{ margin-top:16px; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; }
-    button{ padding:10px 18px; font-size:1rem; border-radius:6px; border:none; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15); transition: background .2s, transform .1s, box-shadow .1s; touch-action:manipulation; }
-    .btn-next{ background:#1976d2; color:#fff; } .btn-next:hover{ background:#1565c0; }
-    .btn-back{ background:#9e9e9e; color:#fff; } .btn-back:hover{ background:#757575; }
-    #completeBtn{ background:#43a047; color:#fff; } #completeBtn:hover{ background:#388e3c; }
-    button:active{ transform: translateY(1px); box-shadow:0 1px 2px rgba(0,0,0,.2); }
-    .note{ margin-top:8px; font-size:.85rem; color:#666; }
-    .error-message{ margin-top:8px; font-size:.9rem; color:#b71c1c; }
-    .error-message ul{ margin:4px 0 0 1.2em; padding:0; }
-    .error-field{ border:2px solid #e53935 !important; background:#ffebee !important; }
+  tr.likert-row-error th, tr.likert-row-error td{ background:#ffebee !important; }
 
-    /* 縦向き注意（VASページのみ） */
-    .orientation-warning{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:9999; pointer-events:auto; }
-    .orientation-warning-box{
-      background:#fff; padding:16px 20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.25);
-      max-width:320px; margin:0 16px; text-align:center; font-size:.95rem; line-height:1.6;
-    }
-    @media (max-width:1024px) and (orientation:portrait){ body.vas-page .orientation-warning{ display:flex; } }
+  .questionnaire-block { margin-bottom: 18px; }
+  .text-block{ margin-bottom:12px; }
+  .text-label{ display:block; margin-bottom:4px; font-size:1em; }
+  .text-input{ width:100%; box-sizing:border-box; font-size:1em; padding:6px; }
+  .text-input.textarea{ min-height:80px; resize:vertical; }
 
-    /* 600px以下（VASは横一列維持） */
-    @media (max-width:600px){
-      html{ font-size:18px; }
-      .container{ padding:16px 12px 32px; }
-      table.likert th, table.likert td{ padding:10px 4px; }
-      button{ width:100%; justify-content:center; }
-      .nav-buttons{ flex-direction:column; }
-      .vas-container{ flex-direction: row !important; }
-      .vas-line-wrapper{ width:100%; }
-      .vas-draw-area{ width:100%; }
-    }
+  .export-area{ margin-top:16px; }
+  .nav-buttons{ margin-top:16px; display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; }
+  button{ padding:10px 18px; font-size:1rem; border-radius:6px; border:none; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,.15); transition:.2s; touch-action:manipulation; }
+  .btn-next{ background:#1976d2; color:#fff; } .btn-back{ background:#9e9e9e; color:#fff; }
+  #completeBtn{ background:#43a047; color:#fff; }
+  .note{ margin-top:8px; font-size:.85rem; color:#666; }
+  .error-message{ margin-top:8px; font-size:.9rem; color:#b71c1c; }
+  .error-field{ border:2px solid #e53935 !important; background:#ffebee !important; }
 
-    /* ずっと携帯表示 + VAS長さ 10/15.2 */
-    body.mobile-sim .vas-draw-area{
-      width: calc(100vw * (10 / 15.2));
-      max-width: 100%;
-    }
+  .orientation-warning{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:9999; }
+  .orientation-warning-box{ background:#fff; padding:16px 20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.25); max-width:320px; margin:0 16px; text-align:center; font-size:.95rem; line-height:1.6; }
+  @media (max-width:1024px) and (orientation:portrait){ body.vas-page .orientation-warning{ display:flex; } }
 
-    /* 完了トースト */
-    #completeToast{
-      position: fixed; left:50%; top:16px; transform: translateX(-50%);
-      background:#323232; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.25);
-      z-index:10000; opacity:0; pointer-events:none; transition: opacity .2s ease;
-    }
-    #completeToast.show{ opacity:1; }
+  @media (max-width:600px){
+    html{ font-size:18px; }
+    .container{ padding:16px 12px 32px; }
+    .nav-buttons{ flex-direction:column; }
+  }
+
+  #completeToast{ position: fixed; left:50%; top:16px; transform: translateX(-50%); background:#323232; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.25); z-index:10000; opacity:0; pointer-events:none; transition:.2s; }
+  #completeToast.show{ opacity:1; }
   </style>
 </head>
 <body>
-  <div id="completeToast" role="status" aria-live="polite">完了しました</div>
-
-  <div class="container">
-    <h1>OSA アンケート</h1>
-    <div class="today-label">本日の日付：<span id="todayDate"></span></div>
-    <section class="page active" data-page-index="0" style="font-size:150%">
-      <div class="page-label">ページ 1 / 4</div>
-    <h2>OSA アンケート</h2>
+<div id="completeToast" role="status" aria-live="polite">完了しました</div>
+<div class="container">
+  <h1>OSA アンケート</h1>
+  <div class="today-label">本日の日付：<span id="todayDate"></span></div>
+  <section class="page active"
+                       data-page-index="0"
+                       style="font-size:100%"><div class="page-label">ページ 1 / 3</div><h2>OSA アンケート</h2>
           <div class="time-row block-time" data-block-id="time1">
             <div class="time-head">
-              <label>
-                ① 昨夜、お休みになった時刻
+              <label>① 昨夜、お休みになった時刻
                 <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
               </label>
-              
             </div>
+            
             <div class="time-controls">
               <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
-              <select class="time-hour"><option value="" selected>--</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select> <span class="unit">時</span>
-              <select class="time-minute"><option value="" selected>--</option><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select> <span class="unit">分ごろ</span>
+              <select class="time-hour">
+                <option value="" selected>--</option>
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option>
+              </select> <span class="unit">時</span>
+              <select class="time-minute">
+                <option value="" selected>--</option>
+                <option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+              </select> <span class="unit">分ごろ</span>
             </div>
           </div>
         
           <div class="time-row block-time" data-block-id="time2">
             <div class="time-head">
-              <label>
-                ② 今朝、目覚めた時刻
+              <label>② 今朝、目覚めた時刻
                 <span class="time-date-label">（日付：<span data-role="date-label"></span>）</span>
               </label>
-              
             </div>
+            
             <div class="time-controls">
               <button type="button" class="am-pm-toggle am" data-value="AM">午前</button>
-              <select class="time-hour"><option value="" selected>--</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select> <span class="unit">時</span>
-              <select class="time-minute"><option value="" selected>--</option><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select> <span class="unit">分ごろ</span>
+              <select class="time-hour">
+                <option value="" selected>--</option>
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option>
+              </select> <span class="unit">時</span>
+              <select class="time-minute">
+                <option value="" selected>--</option>
+                <option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+              </select> <span class="unit">分ごろ</span>
             </div>
           </div>
         
           <div class="time-row block-duration" data-block-id="duration1">
-            <div class="time-head">
-              <label>③ 昨夜の睡眠時間</label>
-              
-            </div>
+            <div class="time-head"><label>③ 昨夜の睡眠時間</label></div>
+            
             <div class="time-controls">
               <span class="unit">およそ</span>
-              <select class="duration-hour"><option value="" selected>--</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select>
-              <span class="unit">時間</span>
-              <select class="duration-minute"><option value="" selected>--</option><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select>
-              <span class="unit">分</span>
+              <select class="duration-hour">
+                <option value="" selected>--</option>
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option>
+              </select> <span class="unit">時間</span>
+              <select class="duration-minute">
+                <option value="" selected>--</option>
+                <option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+              </select> <span class="unit">分</span>
             </div>
           </div>
-        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page" data-page-index="1" style="font-size:100%">
-      <div class="page-label">ページ 2 / 4</div>
-    <div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
+        <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page"
+                       data-page-index="1"
+                       style="font-size:100%"><div class="page-label">ページ 2 / 3</div><div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
           <div class="vas-block" data-block-id="vas1">
             <h2>VAS</h2>
             
             <button type="button" class="vas-start-btn">入力を始める</button>
             <div class="vas-container">
-              <div class="vas-label vas-label-left">疲れを
-全く感じない
-最良の感覚</div>
+              <div class="vas-label vas-label-left">疲れを全く感じない<br>最良の感覚</div>
               <div class="vas-line-wrapper">
                 <div class="vas-draw-area">
-                  <div class="vas-line">
-                    <div class="vas-end vas-end-left"></div>
-                    <div class="vas-end vas-end-right"></div>
-                  </div>
+                  <div class="vas-line"><div class="vas-end vas-end-left"></div><div class="vas-end vas-end-right"></div></div>
                   <canvas class="vas-canvas"></canvas>
                 </div>
               </div>
-              <div class="vas-label vas-label-right">何もできないほど疲れ切った
-最悪の感覚</div>
+              <div class="vas-label vas-label-right">何もできないほど疲れ切った<br>最悪の感覚</div>
             </div>
           </div>
-        
-          <div class="vas-block" data-block-id="vas2">
-            <h2>VAS</h2>
-            
-            <button type="button" class="vas-start-btn">入力を始める</button>
-            <div class="vas-container">
-              <div class="vas-label vas-label-left">左側のラベル</div>
-              <div class="vas-line-wrapper">
-                <div class="vas-draw-area">
-                  <div class="vas-line">
-                    <div class="vas-end vas-end-left"></div>
-                    <div class="vas-end vas-end-right"></div>
-                  </div>
-                  <canvas class="vas-canvas"></canvas>
-                </div>
-              </div>
-              <div class="vas-label vas-label-right">右側のラベル</div>
-            </div>
-          </div>
-        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page" data-page-index="2" style="font-size:140%">
-      <div class="page-label">ページ 3 / 4</div>
+        <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page"
+                       data-page-index="2"
+                       style="font-size:100%"><div class="page-label">ページ 3 / 3</div>
+    <div class="questionnaire-block" data-block-id="osa1">
+      <h2>OSA 質問票</h2>
+      
+      <table class="likert">
+        <thead>
+          <tr>
+            <!-- 左右の状態ヘッダー文字は非表示（空） -->
+            <th class="question-text" style="width:26%"></th>
+  <th class="choice-head" style="width:13.5%"><div class="cell-wrap">非常に</div></th><th class="choice-head" style="width:13.5%"><div class="cell-wrap">やや</div></th><th class="choice-head" style="width:13.5%"><div class="cell-wrap">やや</div></th><th class="choice-head" style="width:13.5%"><div class="cell-wrap">非常に</div></th><th class="question-end" style="width:20%"></th>
+          </tr>
+        </thead>
+        <tbody>
+  <tr data-question-index="0">
+      <th class="question-text">
+        <div class="cell-wrap">1. 疲れが残っている</div>
+      </th>
     
-          <div class="questionnaire-block" data-block-id="osa1">
-            <h2>OSA 質問票</h2>
-            
-            <table class="likert">
-              <thead>
-                <tr>
-                  <th class="question-text">左側の状態</th>
-        <th>非常に</th><th>やや</th><th>やや</th><th>非常に</th><th class="question-end">右側の状態</th></tr></thead><tbody><tr data-question-index="0"><th class="question-text">1. 疲れが残っている</th>
-              <td class="likert-cell" data-block-id="osa1" data-question-index="0" data-choice-index="0">
-                非常に
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="0" data-choice-index="1">
-                やや
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="0" data-choice-index="2">
-                やや
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="0" data-choice-index="3">
-                非常に
-              </td>
-            <th class="question-end">疲れが取れている</th></tr><tr data-question-index="1"><th class="question-text">16. 眠りが浅かった</th>
-              <td class="likert-cell" data-block-id="osa1" data-question-index="1" data-choice-index="0">
-                非常に
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="1" data-choice-index="1">
-                やや
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="1" data-choice-index="2">
-                やや
-              </td>
-            
-              <td class="likert-cell" data-block-id="osa1" data-question-index="1" data-choice-index="3">
-                非常に
-              </td>
-            <th class="question-end">眠りが深かった</th></tr></tbody></table></div><div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="1">戻る</button><button type="button" class="btn-next nav-next" data-target-page="3">次へ</button></div></section><section class="page" data-page-index="3" style="font-size:140%">
-      <div class="page-label">ページ 4 / 4</div>
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="0"
+            data-choice-index="0">
+          <div class="cell-wrap">非常に</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="0"
+            data-choice-index="1">
+          <div class="cell-wrap">やや</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="0"
+            data-choice-index="2">
+          <div class="cell-wrap">やや</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="0"
+            data-choice-index="3">
+          <div class="cell-wrap">非常に</div>
+        </td>
+      
+        <th class="question-end">
+          <div class="cell-wrap">疲れが取れている</div>
+        </th>
+      </tr><tr data-question-index="1">
+      <th class="question-text">
+        <div class="cell-wrap">16. 眠りが浅かった</div>
+      </th>
     
-          <div class="questionnaire-block" data-block-id="q3">
-            <h2>新しい質問票</h2>
-            
-            <table class="likert">
-              <thead>
-                <tr>
-                  <th class="question-text">左側の状態</th>
-        <th>非常にそう思う</th><th>ややそう思う</th><th>どちらともいえない</th><th>あまりそう思わない</th><th>まったく思わない</th></tr></thead><tbody><tr data-question-index="0"><th class="question-text">体が疲れていると感じることがよくある</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="0" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="0" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="0" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="0" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="0" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="1"><th class="question-text">どのような時に体が疲れるのか、把握できている</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="1" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="1" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="1" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="1" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="1" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="2"><th class="question-text">自分の体の疲れの状態を数値化して管理したいと思う</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="2" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="2" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="2" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="2" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="2" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="3"><th class="question-text">自分の体のコンディションを整える方法を知っている</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="3" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="3" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="3" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="3" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="3" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="4"><th class="question-text">自分の今の体の疲れに最適なケア方法を知りたい</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="4" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="4" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="4" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="4" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="4" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="5"><th class="question-text">普段、あまり体の疲れを意識しない</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="5" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="5" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="5" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="5" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="5" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="6"><th class="question-text">自分自身、どのような生活パターンだと体が疲れるのかがいまだによく分からない</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="6" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="6" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="6" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="6" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="6" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="7"><th class="question-text">体が疲れていてその日やるべきことができなかった日がよくある</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="7" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="7" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="7" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="7" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="7" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="8"><th class="question-text">体の疲れを感じたら、回復するためのケアをする</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="8" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="8" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="8" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="8" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="8" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="9"><th class="question-text">もうすぐ体が疲れてしまうと分かっていても特に対処はしない</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="9" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="9" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="9" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="9" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="9" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="10"><th class="question-text">体の疲れを積極的にとりたいと思う</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="10" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="10" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="10" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="10" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="10" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="11"><th class="question-text">体の疲れを感じても気のせいだと思うようにしている</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="11" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="11" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="11" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="11" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="11" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="12"><th class="question-text">体が疲れていると気分にも影響する</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="12" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="12" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="12" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="12" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="12" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="13"><th class="question-text">自分の体の疲れを予測したい（疲れる前に知りたい）</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="13" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="13" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="13" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="13" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="13" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="14"><th class="question-text">体の疲れは自分ではどうにもできない</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="14" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="14" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="14" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="14" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="14" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="15"><th class="question-text">体の疲れを感じた時に同時に達成感を感じる</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="15" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="15" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="15" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="15" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="15" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="16"><th class="question-text">体の疲れは放っておけば何とかなることが多い</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="16" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="16" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="16" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="16" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="16" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="17"><th class="question-text">自分の体が今どのくらい疲れているのかを客観的に知りたい</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="17" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="17" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="17" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="17" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="17" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="18"><th class="question-text">体が疲れてしまう前に積極的に対処するようにしている</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="18" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="18" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="18" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="18" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="18" data-choice-index="4">
-                5
-              </td>
-            </tr><tr data-question-index="19"><th class="question-text">今の体の疲れに関する対処方法をべつに知りたいと思わない</th>
-              <td class="likert-cell" data-block-id="q3" data-question-index="19" data-choice-index="0">
-                1
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="19" data-choice-index="1">
-                2
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="19" data-choice-index="2">
-                3
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="19" data-choice-index="3">
-                4
-              </td>
-            
-              <td class="likert-cell" data-block-id="q3" data-question-index="19" data-choice-index="4">
-                5
-              </td>
-            </tr></tbody></table></div><div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="2">戻る</button><button type="button" id="completeBtn">完了する</button></div>
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="1"
+            data-choice-index="0">
+          <div class="cell-wrap">非常に</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="1"
+            data-choice-index="1">
+          <div class="cell-wrap">やや</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="1"
+            data-choice-index="2">
+          <div class="cell-wrap">やや</div>
+        </td>
+      
+        <td class="likert-cell"
+            data-block-id="osa1"
+            data-question-index="1"
+            data-choice-index="3">
+          <div class="cell-wrap">非常に</div>
+        </td>
+      
+        <th class="question-end">
+          <div class="cell-wrap">眠りが深かった</div>
+        </th>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="1">戻る</button><button type="button" id="completeBtn">完了する</button></div>
         <div class="export-area">
-          <div class="note">
-            ※未入力がある場合は完了できません（必須にしているブロックのみ）。<br />
-            ※完了すると CSV がダウンロードされます（同じ端末・同じブラウザでは行が追加されます）。<br />
-            ※CSVはUTF-8（BOM付き）で出力されます。
-          </div>
+          <div class="note">※未入力がある場合は完了できません（必須ブロックのみ）。<br/>※完了すると CSV がダウンロードされます（同端末・同ブラウザでは行が追加）。<br/>※CSVはUTF-8（BOM付き）。</div>
           <div id="errorMessage" class="error-message"></div>
         </div>
       </section>
-  </div>
+</div>
+<div class="orientation-warning"><div class="orientation-warning-box">
+  スマートフォン／タブレットでは、<br>VAS の入力は横向きでご利用ください。<br><br>
+  端末を横向きにしてから、<br>再度入力してください。
+</div></div>
 
-  <div class="orientation-warning">
-    <div class="orientation-warning-box">
-      スマートフォン／タブレットでは、<br>VAS の入力は横向きでご利用ください。<br><br>
-      端末を横向きにしてから、<br>再度入力してください。
-    </div>
-  </div>
+<script>
+const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","deviceCm":{"width":14.2,"height":6.4},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
+const CSV_FILE_NAME = "osa_survey.csv";
 
-  <script>
-    const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"shift_jis","pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}],"fontPercent":150},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを\n全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true},{"id":"vas2","type":"vas","labelLeft":"左側のラベル","labelRight":"右側のラベル","required":true,"showDescription":true,"description":""}],"fontPercent":100},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}],"fontPercent":140},{"id":"page4","blocks":[{"id":"q3","type":"questionnaire","title":"新しい質問票","hasRightLabel":false,"showChoiceMode":"number","required":true,"showDescription":false,"description":"","choices":[{"label":"非常にそう思う"},{"label":"ややそう思う"},{"label":"どちらともいえない"},{"label":"あまりそう思わない"},{"label":"まったく思わない"}],"questions":[{"left":"体が疲れていると感じることがよくある","right":""},{"left":"どのような時に体が疲れるのか、把握できている","right":""},{"left":"自分の体の疲れの状態を数値化して管理したいと思う","right":""},{"left":"自分の体のコンディションを整える方法を知っている","right":""},{"left":"自分の今の体の疲れに最適なケア方法を知りたい","right":""},{"left":"普段、あまり体の疲れを意識しない","right":""},{"left":"自分自身、どのような生活パターンだと体が疲れるのかがいまだによく分からない","right":""},{"left":"体が疲れていてその日やるべきことができなかった日がよくある","right":""},{"left":"体の疲れを感じたら、回復するためのケアをする","right":""},{"left":"もうすぐ体が疲れてしまうと分かっていても特に対処はしない","right":""},{"left":"体の疲れを積極的にとりたいと思う","right":""},{"left":"体の疲れを感じても気のせいだと思うようにしている","right":""},{"left":"体が疲れていると気分にも影響する","right":""},{"left":"自分の体の疲れを予測したい（疲れる前に知りたい）","right":""},{"left":"体の疲れは自分ではどうにもできない","right":""},{"left":"体の疲れを感じた時に同時に達成感を感じる","right":""},{"left":"体の疲れは放っておけば何とかなることが多い","right":""},{"left":"自分の体が今どのくらい疲れているのかを客観的に知りたい","right":""},{"left":"体が疲れてしまう前に積極的に対処するようにしている","right":""},{"left":"今の体の疲れに関する対処方法をべつに知りたいと思わない","right":""}]}],"fontPercent":140}]};
-    const CSV_FILE_NAME = "osa_survey.csv";
+document.addEventListener("DOMContentLoaded", function () {
+  // ★ デバイスサイズの既定値を自動セット（なければ 15.2 × 7.8）
+  if (!surveyConfig.deviceCm) surveyConfig.deviceCm = {};
+  if (surveyConfig.deviceCm.width == null) surveyConfig.deviceCm.width = 15.2;
+  if (surveyConfig.deviceCm.height == null) surveyConfig.deviceCm.height = 7.8;
 
-    document.addEventListener("DOMContentLoaded", function () {
-      // ずっと携帯表示
-      document.body.classList.add("mobile-sim");
+  // オフライン時の更新/離脱確認
+  window.addEventListener("beforeunload", function (e) {
+    if (!navigator.onLine) {
+      e.preventDefault();
+      e.returnValue = "オフラインです。ページを更新／移動しますか？";
+    }
+  });
 
-      // オフライン更新警告
-      window.addEventListener("beforeunload", function (e) {
-        if (!navigator.onLine) { e.preventDefault(); e.returnValue = "オフラインです。ページを更新／移動しますか？"; }
-      });
+  // タップ判定（スクロールとの誤タップ抑制）
+  function addTapListener(el, handler){
+    let touch=('ontouchstart' in window)||navigator.maxTouchPoints>0, moved=false, last=0;
+    if(touch){
+      el.addEventListener('touchstart',()=>moved=false,{passive:true});
+      el.addEventListener('touchmove',()=>moved=true,{passive:true});
+      el.addEventListener('touchend',e=>{ if(!moved){ last=Date.now(); handler(e); } });
+    }
+    el.addEventListener('click',e=>{ if(Date.now()-last<500) return; handler(e); });
+  }
 
-      function addTapListener(element, handler) {
-        let touchSupported = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-        let touchMoved = false, lastTouchTime = 0;
-        if (touchSupported) {
-          element.addEventListener("touchstart", ()=>{ touchMoved=false; });
-          element.addEventListener("touchmove", ()=>{ touchMoved=true; });
-          element.addEventListener("touchend", (e)=>{ if(!touchMoved){ lastTouchTime=Date.now(); handler(e); } });
-        }
-        element.addEventListener("click", (e)=>{ if(Date.now()-lastTouchTime<500) return; handler(e); });
-      }
+  // 日付
+  function pad2(n){return String(n).padStart(2,'0');}
+  function fmtDate(d){return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
+  function fmtDateTime(d){return fmtDate(d)+" "+pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());}
+  const today = new Date();
+  const answerDateStr = fmtDate(today);
+  const lastNight = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
+  const lastNightStr = fmtDate(lastNight);
+  const todayEl = document.getElementById("todayDate"); if (todayEl) todayEl.textContent = answerDateStr;
 
-      function formatDateLocal(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
-      function formatDateTimeLocal(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); const hh=String(d.getHours()).padStart(2,"0"); const mi=String(d.getMinutes()).padStart(2,"0"); const ss=String(d.getSeconds()).padStart(2,"0"); return y+"-"+m+"-"+day+" "+hh+":"+mi+":"+ss; }
+  // ページ制御（リロード後も位置維持）
+  const pages = Array.from(document.querySelectorAll(".page"));
+  let currentPageIndex = 0;
+  const PAGE_NAME_PREFIX = "OSA_PAGE_";
+  function initialPage(){
+    const m=(window.name||"").match(/^OSA_PAGE_(\d+)$/); const i=m?parseInt(m[1],10):0;
+    return isNaN(i)?0:Math.max(0,Math.min(pages.length-1,i));
+  }
+  function pageHasVAS(i){
+    const p=surveyConfig.pages[i]; return !!(p && p.blocks && p.blocks.some(b=>b.type==='vas'));
+  }
+  function showPage(i){
+    pages.forEach((p,idx)=>p.classList.toggle('active', idx===i));
+    currentPageIndex=i;
+    document.body.classList.toggle('vas-page', pageHasVAS(i));
+    window.scrollTo({top:0, behavior:"smooth"});
+    try{ window.name = PAGE_NAME_PREFIX + i; }catch(e){}
+    applyVasWidthFromDeviceCm();
+    document.querySelectorAll(".vas-block").forEach(el=>{ if(el.__vasResize) el.__vasResize(); });
+    requestAnimationFrame(() => equalizeLikertRowHeights(pages[idx]));
+  }
+  document.querySelectorAll(".nav-prev").forEach(btn=>{
+    btn.addEventListener('click',()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); });
+  });
+  document.querySelectorAll(".nav-next").forEach(btn=>{
+    btn.addEventListener('click',()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); });
+  });
 
-      const today = new Date();
-      const answerDateStr = formatDateLocal(today);
-      const lastNight = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
-      const lastNightStr = formatDateLocal(lastNight);
-      const todayEl = document.getElementById("todayDate");
-      if (todayEl) todayEl.textContent = answerDateStr;
-
-      const pages = Array.from(document.querySelectorAll(".page"));
-      let currentPageIndex = 0;
-
-      // プレビュー更新時のページ維持
-      const PAGE_NAME_PREFIX = "OSA_PAGE_";
-      function getInitialPageIndex() {
-        const m = (window.name || "").match(/^OSA_PAGE_(\d+)$/);
-        const i = m ? parseInt(m[1], 10) : 0;
-        return isNaN(i) ? 0 : Math.max(0, Math.min(pages.length - 1, i));
-      }
-
-      function pageHasVAS(index){ const page=surveyConfig.pages[index]; return !!(page && page.blocks.some(b=>b.type==="vas")); }
-      function showPage(idx){
-        pages.forEach((p,i)=>{ if(i===idx) p.classList.add("active"); else p.classList.remove("active"); });
-        currentPageIndex = idx;
-
-        if (pageHasVAS(idx)) document.body.classList.add("vas-page"); else document.body.classList.remove("vas-page");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-        // 現在ページを window.name に保存（親から再描画時に参照）
-        try { window.name = PAGE_NAME_PREFIX + idx; } catch (e) {}
-
-        document.querySelectorAll(".vas-block").forEach(blockEl => { if (blockEl.__vasResize) blockEl.__vasResize(); });
-      }
-
-      document.querySelectorAll(".nav-prev").forEach(btn => btn.addEventListener("click", ()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); }));
-      document.querySelectorAll(".nav-next").forEach(btn => btn.addEventListener("click", ()=>{ const t=parseInt(btn.dataset.targetPage,10); if(!isNaN(t)) showPage(t); }));
-
-      function findBlockConfigById(id){ for(const p of surveyConfig.pages){ const b=p.blocks.find(bb=>bb.id===id); if(b) return b; } return null; }
-
-      // 時刻（select）※従来の .time-hour/.time-minute クラスをそのまま使用
-      document.querySelectorAll(".block-time").forEach((rowEl)=>{
-        const blockId=rowEl.dataset.blockId;
-        const cfg=findBlockConfigById(blockId) || {};
-        const toggleBtn=rowEl.querySelector(".am-pm-toggle");
-        const dateLabelSpan=rowEl.querySelector("[data-role='date-label']");
-        function updateDateLabel(){
-          if(!dateLabelSpan) return;
-          if (cfg.adjustDateOnAm){ const isAM = toggleBtn.dataset.value === "AM"; dateLabelSpan.textContent = isAM ? answerDateStr : lastNightStr; }
-          else { dateLabelSpan.textContent = answerDateStr; }
-        }
-        if (toggleBtn){
-          addTapListener(toggleBtn, function(){
-            if (toggleBtn.dataset.value === "AM"){ toggleBtn.dataset.value="PM"; toggleBtn.textContent="午後"; toggleBtn.classList.remove("am"); toggleBtn.classList.add("pm"); }
-            else { toggleBtn.dataset.value="AM"; toggleBtn.textContent="午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am"); }
-            updateDateLabel();
-          });
-        }
-        updateDateLabel();
-      });
-
-      // VAS
-      const vasStates = {};
-      function setupVASBlock(blockEl){
-        const blockId=blockEl.dataset.blockId;
-        const startBtn=blockEl.querySelector(".vas-start-btn");
-        const line=blockEl.querySelector(".vas-line");
-        const container=blockEl.querySelector(".vas-container");
-        const drawArea=blockEl.querySelector(".vas-draw-area");
-        const canvas=blockEl.querySelector("canvas.vas-canvas");
-        if(!startBtn||!line||!container||!drawArea||!canvas) return;
-
-        /* ページ共通ヘルパー要素（1ページ1つ） */
-        const pageEl = blockEl.closest('.page');
-        const helperText = pageEl ? pageEl.querySelector('.vas-page-helper') : null;
-
-        const ctx=canvas.getContext("2d");
-        let strokePoints=[], isDrawing=false, isActive=false, lastPoint=null;
-
-        if(!vasStates[blockId]) vasStates[blockId]={ distanceMm:null, normPoints:null };
-        const state=vasStates[blockId];
-
-        function redrawFromNorm(){
-          if(!state.normPoints || state.normPoints.length<2) return;
-          ctx.clearRect(0,0,canvas.width,canvas.height);
-          ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round";
-          ctx.beginPath();
-          const first=state.normPoints[0];
-          let px=first.x*canvas.width, py=first.y*canvas.height;
-          ctx.moveTo(px,py);
-          for(let i=1;i<state.normPoints.length;i++){
-            const p=state.normPoints[i];
-            const cx=p.x*canvas.width, cy=p.y*canvas.height;
-            const midX=(px+cx)/2, midY=(py+cy)/2;
-            ctx.quadraticCurveTo(px,py,midX,midY);
-            px=cx; py=cy;
-          }
-          ctx.stroke(); ctx.closePath();
-        }
-        function resizeCanvas(){
-          const rect=drawArea.getBoundingClientRect();
-          if(rect.width===0 || rect.height===0) return;
-          canvas.width=rect.width; canvas.height=rect.height;
-          redrawFromNorm();
-        }
-        resizeCanvas();
-        window.addEventListener("resize", resizeCanvas);
-        window.addEventListener("orientationchange", ()=>setTimeout(resizeCanvas,200));
-        window.addEventListener("pageshow", resizeCanvas);
-        blockEl.__vasResize=resizeCanvas;
-
-        addTapListener(startBtn, function(){
-          isActive=true; line.classList.add("active"); container.classList.remove("error-field");
-          const ctx2=canvas.getContext("2d"); ctx2.clearRect(0,0,canvas.width,canvas.height); strokePoints=[]; lastPoint=null;
-          startBtn.textContent="入力中...";
-          if (helperText) helperText.textContent = "横線をまたぐように、線を1本引いてください。";
-        });
-
-        function getCanvasPos(evt){ const rect=canvas.getBoundingClientRect(); return { x:evt.clientX-rect.left, y:evt.clientY-rect.top }; }
-
-        canvas.addEventListener("pointerdown", function(evt){
-          if(!isActive) return; evt.preventDefault(); isDrawing=true; strokePoints=[]; const ctx2=canvas.getContext("2d"); ctx2.clearRect(0,0,canvas.width,canvas.height);
-          const p=getCanvasPos(evt); strokePoints.push(p); lastPoint=p;
-          ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(p.x,p.y);
-        });
-        canvas.addEventListener("pointermove", function(evt){
-          if(!isDrawing) return; evt.preventDefault();
-          const p=getCanvasPos(evt); strokePoints.push(p);
-          const midX=(lastPoint.x+p.x)/2, midY=(lastPoint.y+p.y)/2;
-          ctx.quadraticCurveTo(lastPoint.x,lastPoint.y,midX,midY); ctx.stroke(); lastPoint=p;
-        });
-        function finishStroke(evt){
-          if(!isDrawing) return; evt.preventDefault(); isDrawing=false; ctx.closePath();
-
-          if(strokePoints.length<2){
-            if (helperText) helperText.textContent = "線が短すぎます。もう一度、横線をまたぐように線を引いてください。";
-            return;
-          }
-
-          const canvasRect=canvas.getBoundingClientRect();
-          const lineRect=line.getBoundingClientRect();
-          const lineY=(lineRect.top+lineRect.height/2)-canvasRect.top;
-          const minX=lineRect.left-canvasRect.left, maxX=lineRect.right-canvasRect.left;
-
-          let xs=[];
-          for(let i=1;i<strokePoints.length;i++){
-            const p1=strokePoints[i-1], p2=strokePoints[i];
-            if((p1.y<=lineY && p2.y>=lineY) || (p1.y>=lineY && p2.y<=lineY)){
-              if(p1.y===p2.y) continue;
-              const t=(lineY-p1.y)/(p2.y-p1.y);
-              const x=p1.x+(p2.x-p1.x)*t;
-              if(x>=minX && x<=maxX) xs.push(x);
-            }
-          }
-          if(xs.length===0){
-            if (helperText) helperText.textContent = "横線と交わるように線を引いてください。もう一度お試しください。";
-          } else {
-            const xIntersect=xs[xs.length-1];
-            const widthPx=maxX-minX;
-            if(widthPx<=0){
-              if (helperText) helperText.textContent = "線の取得でエラーが起きました。もう一度お試しください。";
-            } else {
-              const ratio=(xIntersect-minX)/widthPx;
-              const distance=ratio*100;
-              state.distanceMm=Number(distance.toFixed(1));
-              state.normPoints=strokePoints.map(p=>({ x:p.x/canvas.width, y:p.y/canvas.height }));
-              if (helperText) helperText.textContent = "線の入力が完了しました。必要に応じて「修正する」で書き直してください。";
-            }
-          }
-          isActive=false; line.classList.remove("active");
-          startBtn.textContent="修正する";
-          redrawFromNorm();
-        }
-        canvas.addEventListener("pointerup", finishStroke);
-        canvas.addEventListener("pointercancel", finishStroke);
-      }
-      document.querySelectorAll(".vas-block").forEach(setupVASBlock);
-
-      // 質問票
-      document.querySelectorAll(".likert-cell").forEach((cell)=>{
-        addTapListener(cell, function(){
-          const blockId=cell.dataset.blockId, qIndex=cell.dataset.questionIndex;
-          const selector='.likert-cell[data-block-id="'+blockId+'"][data-question-index="'+qIndex+'"]';
-          document.querySelectorAll(selector).forEach(c=>c.classList.remove("selected"));
-          cell.classList.add("selected");
-          const tr=cell.closest("tr"); if(tr) tr.classList.remove("likert-row-error");
-        });
-      });
-
-      const errorBox=document.getElementById("errorMessage");
-      function clearErrors(){
-        if(errorBox) errorBox.textContent="";
-        document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
-        document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
-      }
-      function isRequired(block){ return block.required !== false; }
-      function validateAll(){
-        clearErrors(); const messages=[]; let valid=true;
-        function markError(el,msg){ if(el) el.classList.add("error-field"); messages.push(msg); valid=false; }
-
-        surveyConfig.pages.forEach((page)=>{
-          page.blocks.forEach((block)=>{
-            if(block.type==="time"){
-              const rowEl=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!rowEl) return;
-              const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
-              if(isRequired(block)){ if(!hour || !hour.value) markError(hour,(block.label||"時刻")+"（時）が未入力です。"); if(!min || !min.value) markError(min,(block.label||"時刻")+"（分）が未入力です。"); }
-            } else if(block.type==="duration"){
-              const rowEl=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!rowEl) return;
-              const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
-              if(isRequired(block)){ if(!hour || !hour.value) markError(hour,(block.label||"時間")+"（時間）が未入力です。"); if(!min || !min.value) markError(min,(block.label||"時間")+"（分）が未入力です。"); }
-            } else if(block.type==="vas"){
-              const blockEl=document.querySelector('.vas-block[data-block-id="'+block.id+'"]');
-              const container=blockEl && blockEl.querySelector(".vas-container");
-              const state=vasStates[block.id];
-              if(isRequired(block) && (!state || state.distanceMm==null)){ if(container) markError(container, "VAS が未入力です。"); }
-            } else if(block.type==="text"){
-              const blockEl=document.querySelector('.text-block[data-block-id="'+block.id+'"]'); if(!blockEl) return;
-              const inputEl=blockEl.querySelector(".text-input");
-              if(isRequired(block) && (!inputEl || !inputEl.value.trim())){ markError(inputEl,(block.label||"自由記述")+" が未入力です。"); }
-            } else if(block.type==="questionnaire"){
-              const qBlockEl=document.querySelector('.questionnaire-block[data-block-id="'+block.id+'"]'); if(!qBlockEl) return;
-              if(isRequired(block)){
-                (block.questions||[]).forEach((q,qIndex)=>{
-                  const selector='.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qIndex+'"].selected';
-                  const selected=document.querySelector(selector);
-                  if(!selected){
-                    const tr=qBlockEl.querySelector('tr[data-question-index="'+qIndex+'"]');
-                    if(tr) tr.classList.add("likert-row-error");
-                    messages.push((q.left||"設問 "+(qIndex+1)) + " が未選択です。");
-                    valid=false;
-                  }
-                });
-              }
-            }
-          });
-        });
-
-        if(!valid && messages.length>0 && errorBox){
-          const ul=document.createElement("ul"); messages.forEach(m=>{ const li=document.createElement("li"); li.textContent=m; ul.appendChild(li); });
-          errorBox.innerHTML=""; errorBox.appendChild(ul); errorBox.scrollIntoView({ behavior:"smooth", block:"nearest" });
-        }
-        return valid;
-      }
-
-      function resetSurveyToInitial(){
-        const errorBox=document.getElementById("errorMessage"); if(errorBox) errorBox.textContent="";
-        document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
-        document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
-
-        document.querySelectorAll(".block-time").forEach(rowEl=>{
-          const toggleBtn=rowEl.querySelector(".am-pm-toggle");
-          const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
-          if(toggleBtn){ toggleBtn.dataset.value="AM"; toggleBtn.textContent="午前"; toggleBtn.classList.remove("pm"); toggleBtn.classList.add("am"); }
-          if(hour) hour.value=""; if(min) min.value="";
-          const dateLabelSpan=rowEl.querySelector("[data-role='date-label']");
-          const today=new Date(); const answerDateStr=formatDateLocal(today); if(dateLabelSpan) dateLabelSpan.textContent=answerDateStr;
-        });
-
-        document.querySelectorAll(".block-duration").forEach(rowEl=>{
-          const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
-          if(hour) hour.value=""; if(min) min.value="";
-        });
-
-        document.querySelectorAll(".vas-block").forEach(blockEl=>{
-          const canvas=blockEl.querySelector("canvas.vas-canvas");
-          const btn=blockEl.querySelector(".vas-start-btn");
-          const line=blockEl.querySelector(".vas-line");
-          if(canvas){ const ctx=canvas.getContext("2d"); ctx.clearRect(0,0,canvas.width,canvas.height); }
-          if(line) line.classList.remove("active");
-          if(btn) btn.textContent="入力を始める";
-          const vs=document.querySelectorAll(".vas-block");
-          vs.forEach(vb=>{ const bid=vb.dataset.blockId; if(bid && vasStates[bid]){ vasStates[bid].distanceMm=null; vasStates[bid].normPoints=null; } });
-          if(blockEl.__vasResize) blockEl.__vasResize();
-        });
-
-        /* ページ共通ヘルパーを初期文言に戻す */
-        document.querySelectorAll(".vas-page-helper").forEach(el=>{
-          el.textContent = "「入力を始める」を押してから、横線をまたぐように線を引いてください。";
-        });
-
-        document.querySelectorAll(".text-block .text-input").forEach(el=>el.value="");
-        document.querySelectorAll(".likert-cell.selected").forEach(cell=>cell.classList.remove("selected"));
-        document.body.classList.remove("completed");
-      }
-
-      const completeBtn=document.getElementById("completeBtn");
-      if(completeBtn){
-        addTapListener(completeBtn, function(){
-          if(!validateAll()) return;
-
-          const answers={};
-          answers.answer_datetime=formatDateTimeLocal(new Date());
-          answers.answer_date=answerDateStr;
-
-          surveyConfig.pages.forEach((page)=>{
-            page.blocks.forEach((block)=>{
-              if(block.type==="time"){
-                const rowEl=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!rowEl) return;
-                const toggleBtn=rowEl.querySelector(".am-pm-toggle");
-                const hour=rowEl.querySelector(".time-hour"); const min=rowEl.querySelector(".time-minute");
-                const ampm=toggleBtn ? toggleBtn.dataset.value : "";
-                let dateValue=answerDateStr;
-                if(block.adjustDateOnAm){ dateValue=(ampm==="AM")?answerDateStr:lastNightStr; }
-                answers[block.id+"_date"]=dateValue;
-                answers[block.id+"_ampm"]=ampm;
-                answers[block.id+"_hour"]=hour ? (hour.value||"") : "";
-                answers[block.id+"_minute"]=min ? (min.value||"") : "";
-              } else if(block.type==="duration"){
-                const rowEl=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!rowEl) return;
-                const hour=rowEl.querySelector(".duration-hour"); const min=rowEl.querySelector(".duration-minute");
-                answers[block.id+"_hour"]=hour ? (hour.value||"") : "";
-                answers[block.id+"_minute"]=min ? (min.value||"") : "";
-              } else if(block.type==="vas"){
-                const state=vasStates[block.id];
-                answers[block.id+"_VAS_mm"]=state && state.distanceMm!=null ? state.distanceMm : "";
-              } else if(block.type==="text"){
-                const blockEl=document.querySelector('.text-block[data-block-id="'+block.id+'"]');
-                const inputEl=blockEl && blockEl.querySelector(".text-input");
-                answers[block.id+"_text"]=inputEl ? inputEl.value : "";
-              } else if(block.type==="questionnaire"){
-                (block.questions||[]).forEach((q,qIndex)=>{
-                  const selector='.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qIndex+'"].selected';
-                  const selected=document.querySelector(selector);
-                  if(!selected){ answers[block.id+"_Q"+(qIndex+1)]=""; }
-                  else{ const choiceIndex=parseInt(selected.dataset.choiceIndex,10); answers[block.id+"_Q"+(qIndex+1)]=String(choiceIndex+1); }
-                });
-              }
-            });
-          });
-
-          const headerLabels=["回答日時_詳細(ローカル)","回答日"];
-          const keys=["answer_datetime","answer_date"];
-          surveyConfig.pages.forEach((page)=>{
-            page.blocks.forEach((block)=>{
-              if(block.type==="time"){
-                headerLabels.push(block.id+"_日付", block.id+"_午前午後(AM/PM)", block.id+"_時(0-11)", block.id+"_分");
-                keys.push(block.id+"_date", block.id+"_ampm", block.id+"_hour", block.id+"_minute");
-              } else if(block.type==="duration"){
-                headerLabels.push(block.id+"_時間", block.id+"_分");
-                keys.push(block.id+"_hour", block.id+"_minute");
-              } else if(block.type==="vas"){
-                headerLabels.push(block.id+"_VAS_距離_mm(0-100)");
-                keys.push(block.id+"_VAS_mm");
-              } else if(block.type==="text"){
-                headerLabels.push(block.id+"_自由記述");
-                keys.push(block.id+"_text");
-              } else if(block.type==="questionnaire"){
-                (block.questions||[]).forEach((q,qIndex)=>{
-                  headerLabels.push(block.id+"_Q"+(qIndex+1)+"(1〜"+((block.choices&&block.choices.length)||0)+")");
-                  keys.push(block.id+"_Q"+(qIndex+1));
-                });
-              }
-            });
-          });
-
-          const STORAGE_KEY="osa_survey_rows_v1";
-          let stored=localStorage.getItem(STORAGE_KEY); let allRows;
-          if(stored){ try{ allRows=JSON.parse(stored); if(!Array.isArray(allRows)) allRows=[]; }catch(e){ allRows=[]; } }
-          else { allRows=[]; }
-
-          const currentRow = keys.map(k=>{
-            const v = answers[k]==null ? "" : String(answers[k]);
-            if (v.includes(",") || v.includes('"') || v.includes("\n")) return '"' + v.replace(/"/g,'""') + '"';
-            return v;
-          });
-          allRows.push(currentRow);
-          try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(allRows)); }catch(e){}
-
-          const csvRows=[]; csvRows.push(headerLabels.join(",")); allRows.forEach(row=>csvRows.push(row.join(",")));
-          const csvContent="\uFEFF"+csvRows.join("\r\n");
-          const blob=new Blob([csvContent], { type:"text/csv;charset=utf-8;" });
-          const url=URL.createObjectURL(blob);
-
-          const baseName=CSV_FILE_NAME || "osa_survey.csv";
-          const now=new Date(); const hh=String(now.getHours()).padStart(2,"0"); const mm2=String(now.getMinutes()).padStart(2,"0"); const ss=String(now.getSeconds()).padStart(2,"0");
-          const stamp=answerDateStr+"_"+hh+mm2+ss;
-          const downloadName=baseName.replace(/\.csv$/i,"")+"_"+stamp+".csv";
-
-          const a=document.createElement("a"); a.href=url; a.download=downloadName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-
-          const toast=document.getElementById("completeToast"); if(toast){ toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),1600); }
-          resetSurveyToInitial(); showPage(0);
-        });
-      }
-
-      // 初期表示は保持されていればそのページへ
-      showPage(getInitialPageIndex());
+  // VAS を 10cm にスケール（デバイス横cmに基づく）
+  function applyVasWidthFromDeviceCm(){
+    const dw = (surveyConfig.deviceCm && surveyConfig.deviceCm.width)  || 15.2; // 横(cm)
+    const px = Math.min(window.innerWidth, window.innerWidth * (10 / Math.max(1, dw)));
+    document.querySelectorAll('.vas-draw-area').forEach(area=>{
+      area.style.width = Math.max(80, px) + 'px';
     });
-  </script>
+  }
+  window.addEventListener("resize", () => {
+  const active = document.querySelector(".page.active");
+  if (active) equalizeLikertRowHeights(active);
+});
+  window.addEventListener('orientationchange', ()=>setTimeout(applyVasWidthFromDeviceCm, 200));
+  applyVasWidthFromDeviceCm();
+
+  // ビルダーからのライブ文字サイズ変更
+  window.addEventListener("message", function (ev) {
+    const d = ev.data;
+    if (!d || d.type !== "setPageFont") return;
+    const sec = document.querySelector('.page[data-page-index="' + d.pageIndex + '"]');
+    if (sec) sec.style.fontSize = String(d.fontPercent) + '%';
+  });
+
+  // 質問票の行高を“表内で”統一する
+
+  // 質問票の行高を“表内で”統一する（バッククオート非使用版）
+  function equalizeLikertRowHeights(root) {
+    if (!root) root = document;
+
+    root.querySelectorAll("table.likert").forEach(function(table){
+      var rows = table.querySelectorAll("tbody tr");
+      if (!rows.length) return;
+
+      // いったん自動高さに戻す
+      rows.forEach(function(tr){
+        tr.style.height = "";
+        tr.querySelectorAll("th, td").forEach(function(cell){
+          cell.style.height = "";
+        });
+      });
+
+      // 各行の実高さを計測 → 表内の最大値を採用
+      var maxH = 0;
+      rows.forEach(function(tr){
+        var h = tr.getBoundingClientRect().height;
+        if (h > maxH) maxH = h;
+      });
+
+      // 全行を最大値に合わせる（テンプレートリテラル禁止）
+      var hpx = String(Math.ceil(maxH)) + "px";
+      rows.forEach(function(tr){
+        tr.style.height = hpx;
+        tr.querySelectorAll("th, td").forEach(function(cell){
+          cell.style.height = hpx;
+        });
+      });
+    });
+  }
+
+
+  // ブロック設定参照
+  function blockCfgById(id){ for(const p of surveyConfig.pages){ const b=(p.blocks||[]).find(bb=>bb.id===id); if(b) return b; } return null; }
+
+  // 時刻ブロック
+  document.querySelectorAll(".block-time").forEach(row=>{
+    const cfg = blockCfgById(row.dataset.blockId) || {};
+    const btn = row.querySelector(".am-pm-toggle");
+    const label = row.querySelector("[data-role='date-label']");
+    function upd(){
+      if(!label) return;
+      label.textContent = cfg.adjustDateOnAm ? ((btn.dataset.value==='AM')?answerDateStr:lastNightStr) : answerDateStr;
+    }
+    if (btn){
+      addTapListener(btn, ()=>{
+        if(btn.dataset.value==='AM'){ btn.dataset.value='PM'; btn.textContent='午後'; btn.classList.remove('am'); btn.classList.add('pm'); }
+        else { btn.dataset.value='AM'; btn.textContent='午前'; btn.classList.remove('pm'); btn.classList.add('am'); }
+        upd();
+      });
+    }
+    upd();
+  });
+
+  // VAS：描画＆距離保存
+  function setupVASBlock(blockEl){
+    const id=blockEl.dataset.blockId;
+    const startBtn=blockEl.querySelector(".vas-start-btn");
+    const line=blockEl.querySelector(".vas-line");
+    const drawArea=blockEl.querySelector(".vas-draw-area");
+    const canvas=blockEl.querySelector("canvas.vas-canvas");
+    if(!startBtn||!line||!drawArea||!canvas) return;
+
+    // ページ上部のヘルパをこのページ内から拾う
+    const pageEl = blockEl.closest('.page');
+    const helperText = pageEl ? pageEl.querySelector('.vas-page-helper') : null;
+
+    const ctx=canvas.getContext("2d");
+    let pts=[], drawing=false, active=false, last=null;
+
+    function redrawFromNorm(norm){
+      if(!norm || norm.length<2) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round";
+      ctx.beginPath();
+      let px=norm[0].x*canvas.width, py=norm[0].y*canvas.height;
+      ctx.moveTo(px,py);
+      for(let i=1;i<norm.length;i++){
+        const cx=norm[i].x*canvas.width, cy=norm[i].y*canvas.height;
+        const mx=(px+cx)/2, my=(py+cy)/2; ctx.quadraticCurveTo(px,py,mx,my); px=cx; py=cy;
+      }
+      ctx.stroke(); ctx.closePath();
+    }
+    function resize(){
+      const r=drawArea.getBoundingClientRect();
+      if(r.width===0||r.height===0) return;
+      canvas.width=r.width; canvas.height=r.height;
+      // 既に保存されていれば描き直し
+      if (canvas.dataset.norm) {
+        try { const norm = JSON.parse(canvas.dataset.norm); redrawFromNorm(norm); } catch(e){}
+      }
+    }
+    resize(); window.addEventListener('resize', resize); window.addEventListener('pageshow', resize); blockEl.__vasResize=resize;
+
+    addTapListener(startBtn, ()=>{
+      active=true;
+      line.classList.add('active');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pts=[]; last=null;
+      startBtn.textContent='入力中...';
+      if (helperText) helperText.textContent = '横線をまたぐように、線を1本引いてください。';
+      // 既存線を一旦クリア
+      canvas.removeAttribute('data-dist-mm');
+      canvas.removeAttribute('data-norm');
+    });
+
+    function pos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+
+    canvas.addEventListener('pointerdown', e=>{
+      if(!active) return; e.preventDefault(); drawing=true; pts=[];
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const p=pos(e); pts.push(p); last=p;
+      ctx.lineWidth=2; ctx.strokeStyle="#e53935"; ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(p.x,p.y);
+    });
+    canvas.addEventListener('pointermove', e=>{
+      if(!drawing) return; e.preventDefault();
+      const p=pos(e); pts.push(p);
+      const mx=(last.x+p.x)/2, my=(last.y+p.y)/2; ctx.quadraticCurveTo(last.x,last.y,mx,my); ctx.stroke(); last=p;
+    });
+    function finish(e){
+      if(!drawing) return; e.preventDefault(); drawing=false; ctx.closePath();
+      if(pts.length<2){ if (helperText) helperText.textContent='線が短すぎます。もう一度、横線をまたぐように線を引いてください。'; return; }
+      const c=canvas.getBoundingClientRect(), lr=line.getBoundingClientRect();
+      const y=(lr.top+lr.height/2)-c.top, minX=lr.left-c.left, maxX=lr.right-c.left;
+      let xs=[];
+      for(let i=1;i<pts.length;i++){
+        const a=pts[i-1], b=pts[i];
+        if((a.y<=y && b.y>=y)||(a.y>=y && b.y<=y)){
+          if(a.y===b.y) continue;
+          const t=(y-a.y)/(b.y-a.y);
+          const x=a.x+(b.x-a.x)*t;
+          if(x>=minX && x<=maxX) xs.push(x);
+        }
+      }
+      if(!xs.length){
+        if (helperText) helperText.textContent='横線と交わるように線を引いてください。もう一度お試しください。';
+      } else {
+        const xi=xs[xs.length-1], width=maxX-minX;
+        if(width<=0){
+          if (helperText) helperText.textContent='線の取得でエラーが起きました。もう一度お試しください。';
+        } else {
+          const ratio=(xi-minX)/width, dist=ratio*100; // 横線=100mm相当
+          const distMm = Number(dist.toFixed(1));
+          const norm = pts.map(p=>({x:p.x/canvas.width, y:p.y/canvas.height}));
+          // 保存（CSV収集・リサイズ再描画用）
+          canvas.dataset.distMm = String(distMm);
+          canvas.dataset.norm = JSON.stringify(norm);
+          if (helperText) helperText.textContent='線の入力が完了しました。必要に応じて「修正する」で書き直してください。';
+        }
+      }
+      active=false; line.classList.remove('active'); startBtn.textContent='修正する';
+      if (canvas.dataset.norm) { try{ redrawFromNorm(JSON.parse(canvas.dataset.norm)); }catch(e){} }
+    }
+    canvas.addEventListener('pointerup', finish);
+    canvas.addEventListener('pointercancel', finish);
+  }
+  document.querySelectorAll(".vas-block").forEach(setupVASBlock);
+
+  // 質問票
+  document.querySelectorAll(".likert-cell").forEach(cell=>{
+    addTapListener(cell, ()=>{
+      const bid=cell.dataset.blockId, qi=cell.dataset.questionIndex;
+      document.querySelectorAll('.likert-cell[data-block-id="'+bid+'"][data-question-index="'+qi+'"]').forEach(c=>c.classList.remove('selected'));
+      cell.classList.add('selected');
+      const tr=cell.closest('tr'); if(tr) tr.classList.remove('likert-row-error');
+    });
+  });
+
+  // バリデーション
+  const errorBox=document.getElementById("errorMessage");
+  function clearErrors(){
+    if(errorBox) errorBox.textContent="";
+    document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
+    document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
+  }
+  function required(b){ return b.required !== false; }
+  function validateAll(){
+    clearErrors(); const msgs=[]; let ok=true;
+    function err(el,msg){ if(el) el.classList.add("error-field"); msgs.push(msg); ok=false; }
+
+    surveyConfig.pages.forEach(page=>{
+      (page.blocks||[]).forEach(block=>{
+        if(block.type==='time'){
+          const row=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!row) return;
+          const h=row.querySelector(".time-hour"), m=row.querySelector(".time-minute");
+          if(required(block)){ if(!h||!h.value) err(h, (block.label||"時刻")+"（時）が未入力です。"); if(!m||!m.value) err(m,(block.label||"時刻")+"（分）が未入力です。"); }
+        } else if(block.type==='duration'){
+          const row=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!row) return;
+          const h=row.querySelector(".duration-hour"), m=row.querySelector(".duration-minute");
+          if(required(block)){ if(!h||!h.value) err(h,(block.label||"時間")+"（時間）が未入力です。"); if(!m||!m.value) err(m,(block.label||"時間")+"（分）が未入力です。"); }
+        } else if(block.type==='vas'){
+          const bl=document.querySelector('.vas-block[data-block-id="'+block.id+'"]');
+          const cv=bl && bl.querySelector("canvas.vas-canvas");
+          const container=bl && bl.querySelector(".vas-container");
+          const dist = cv && cv.dataset ? cv.dataset.distMm : "";
+          if(required(block) && !dist){ if(container) err(container, "VAS が未入力です。"); }
+        } else if(block.type==='text'){
+          const bl=document.querySelector('.text-block[data-block-id="'+block.id+'"]'); if(!bl) return;
+          const input=bl.querySelector(".text-input"); if(required(block) && (!input || !input.value.trim())) err(input,(block.label||"自由記述")+" が未入力です。");
+        } else if(block.type==='questionnaire'){
+          const qb=document.querySelector('.questionnaire-block[data-block-id="'+block.id+'"]'); if(!qb) return;
+          if(required(block)){
+            (block.questions||[]).forEach((q,qi)=>{
+              const sel=document.querySelector('.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qi+'"].selected');
+              if(!sel){ const tr=qb.querySelector('tr[data-question-index="'+qi+'"]'); if(tr) tr.classList.add("likert-row-error"); msgs.push((q.left||"設問 "+(qi+1))+" が未選択です。"); ok=false; }
+            });
+          }
+        }
+      });
+    });
+
+    if(!ok && msgs.length && errorBox){
+      const ul=document.createElement("ul"); msgs.forEach(m=>{ const li=document.createElement("li"); li.textContent=m; ul.appendChild(li); });
+      errorBox.innerHTML=""; errorBox.appendChild(ul); errorBox.scrollIntoView({behavior:"smooth", block:"nearest"});
+    }
+    return ok;
+  }
+
+  // 完了 → CSV 追記DL → トースト → リセット
+  function resetSurvey(){
+    const eb=document.getElementById("errorMessage"); if(eb) eb.textContent="";
+    document.querySelectorAll(".error-field").forEach(el=>el.classList.remove("error-field"));
+    document.querySelectorAll(".likert-row-error").forEach(tr=>tr.classList.remove("likert-row-error"));
+
+    document.querySelectorAll(".block-time").forEach(row=>{
+      const btn=row.querySelector(".am-pm-toggle"); const h=row.querySelector(".time-hour"); const m=row.querySelector(".time-minute");
+      if(btn){ btn.dataset.value="AM"; btn.textContent="午前"; btn.classList.remove("pm"); btn.classList.add("am"); }
+      if(h) h.value=""; if(m) m.value="";
+      const lab=row.querySelector("[data-role='date-label']"); if(lab) lab.textContent=answerDateStr;
+    });
+    document.querySelectorAll(".block-duration").forEach(row=>{
+      const h=row.querySelector(".duration-hour"); const m=row.querySelector(".duration-minute"); if(h) h.value=""; if(m) m.value="";
+    });
+    document.querySelectorAll(".vas-block").forEach(bl=>{
+      const cv=bl.querySelector("canvas.vas-canvas"); const btn=bl.querySelector(".vas-start-btn"); const line=bl.querySelector(".vas-line");
+      if(cv){ const c=cv.getContext("2d"); c.clearRect(0,0,cv.width,cv.height); cv.removeAttribute('data-dist-mm'); cv.removeAttribute('data-norm'); }
+      if(line) line.classList.remove("active");
+      if(btn) btn.textContent="入力を始める";
+    });
+    document.querySelectorAll(".vas-page-helper").forEach(el=>{ el.textContent="「入力を始める」を押してから、横線をまたぐように線を引いてください。"; });
+    document.querySelectorAll(".text-block .text-input").forEach(el=>el.value="");
+    document.querySelectorAll(".likert-cell.selected").forEach(cell=>cell.classList.remove("selected"));
+    document.body.classList.remove("completed");
+  }
+
+  const completeBtn=document.getElementById("completeBtn");
+  if(completeBtn){
+    addTapListener(completeBtn, function(){
+      if(!validateAll()) return;
+
+      const answers={}; answers.answer_datetime=fmtDateTime(new Date()); answers.answer_date=answerDateStr;
+
+      surveyConfig.pages.forEach(page=>{
+        (page.blocks||[]).forEach(block=>{
+          if(block.type==='time'){
+            const row=document.querySelector('.block-time[data-block-id="'+block.id+'"]'); if(!row) return;
+            const btn=row.querySelector(".am-pm-toggle"); const h=row.querySelector(".time-hour"); const m=row.querySelector(".time-minute");
+            const ampm=btn?btn.dataset.value:""; const dateVal=block.adjustDateOnAm ? ((ampm==='AM')?answerDateStr:lastNightStr) : answerDateStr;
+            answers[block.id+"_date"]=dateVal; answers[block.id+"_ampm"]=ampm; answers[block.id+"_hour"]=h?(h.value||""):""; answers[block.id+"_minute"]=m?(m.value||""):"";
+          } else if(block.type==='duration'){
+            const row=document.querySelector('.block-duration[data-block-id="'+block.id+'"]'); if(!row) return;
+            const h=row.querySelector(".duration-hour"); const m=row.querySelector(".duration-minute");
+            answers[block.id+"_hour"]=h?(h.value||""):""; answers[block.id+"_minute"]=m?(m.value||""):"";
+          } else if(block.type==='vas'){
+            const bl=document.querySelector('.vas-block[data-block-id="'+block.id+'"]');
+            const cv=bl && bl.querySelector("canvas.vas-canvas");
+            const dist = cv && cv.dataset ? cv.dataset.distMm : "";
+            answers[block.id + "_VAS_mm"] = dist || "";
+          } else if(block.type==='text'){
+            const bl=document.querySelector('.text-block[data-block-id="'+block.id+'"]'); const input=bl && bl.querySelector(".text-input");
+            answers[block.id+"_text"] = input ? input.value : "";
+          } else if(block.type==='questionnaire'){
+            (block.questions||[]).forEach((q,qi)=>{
+              const sel=document.querySelector('.likert-cell[data-block-id="'+block.id+'"][data-question-index="'+qi+'"].selected');
+              answers[block.id+"_Q"+(qi+1)] = sel ? String(parseInt(sel.dataset.choiceIndex,10)+1) : "";
+            });
+          }
+        });
+      });
+
+      // ヘッダ
+      const headers=["回答日時_詳細(ローカル)","回答日"]; const keys=["answer_datetime","answer_date"];
+      surveyConfig.pages.forEach(page=>{
+        (page.blocks||[]).forEach(block=>{
+          if(block.type==='time'){
+            headers.push(block.id+"_日付", block.id+"_午前午後(AM/PM)", block.id+"_時(0-11)", block.id+"_分");
+            keys.push(block.id+"_date", block.id+"_ampm", block.id+"_hour", block.id+"_minute");
+          } else if(block.type==='duration'){
+            headers.push(block.id+"_時間", block.id+"_分");
+            keys.push(block.id+"_hour", block.id+"_minute");
+          } else if(block.type==='vas'){
+            headers.push(block.id+"_VAS_距離_mm(0-100)");
+            keys.push(block.id+"_VAS_mm");
+          } else if(block.type==='text'){
+            headers.push(block.id+"_自由記述"); keys.push(block.id+"_text");
+          } else if(block.type==='questionnaire'){
+            (block.questions||[]).forEach((q,qi)=>{ headers.push(block.id+"_Q"+(qi+1)+"(1〜"+((block.choices&&block.choices.length)||0)+")"); keys.push(block.id+"_Q"+(qi+1)); });
+          }
+        });
+      });
+
+      // 追記保存
+      const STORAGE_KEY="osa_survey_rows_v1";
+      let allRows=[]; try{ const s=localStorage.getItem(STORAGE_KEY); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) allRows=a; } }catch(e){}
+      const row = keys.map(k=>{ const v=answers[k]==null?"":String(answers[k]); return (v.includes(",")||v.includes('"')||v.includes("\n"))?('"'+v.replace(/"/g,'""')+'"'):v; });
+      allRows.push(row); try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(allRows)); }catch(e){}
+
+      const csv=[headers.join(",")].concat(allRows.map(r=>r.join(","))).join("\r\n");
+      const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}); const url=URL.createObjectURL(blob);
+      const now=new Date(); const name=(CSV_FILE_NAME||"osa_survey.csv").replace(/\.csv$/i,"")+"_"+fmtDate(today)+"_"+pad2(now.getHours())+pad2(now.getMinutes())+pad2(now.getSeconds())+".csv";
+      const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+
+      const toast=document.getElementById("completeToast"); if(toast){ toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),1600); }
+      document.body.classList.add("completed");
+      resetSurvey(); showPage(0);
+    });
+  }
+
+  // 初期ページへ
+  showPage(initialPage());
+});
+</script>
 </body>
 </html>
   
