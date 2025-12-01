@@ -314,39 +314,58 @@
 </div></div>
 
 <script>
-const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"shift_jis","deviceCm":{"width":15.2,"height":7.8},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
+const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","deviceCm":{"width":15.2,"height":7.8},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
 const CSV_FILE_NAME = "osa_survey.csv";
 
-// 二重確認ユーティリティ
-function doubleConfirm(msg1, msg2) {
-  if (!confirm(msg1)) return false;
-  return confirm(msg2);
+(function(){
+  try {
+    // 再読み込み検知（押してしまった後の注意）
+    var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    var isReload = nav ? nav.type === "reload"
+                       : (performance.navigation && performance.navigation.type === 1);
+    if (isReload) {
+      setTimeout(function () {
+        alert("ページを再読み込みしました。入力途中のデータが失われた可能性があります。");
+      }, 300);
+    }
+  } catch (e) {}
+})();
+
+// 多重確認ヘルパ
+function multiConfirm(messages) {
+  for (var i = 0; i < messages.length; i++) {
+    var msg = messages[i].replace("{n}", (i + 1) + "/" + messages.length);
+    if (!confirm(msg)) return false;
+  }
+  return true;
 }
 
-// F5 / Ctrl(⌘)+R を横取りして二重確認
+// F5 / Ctrl(⌘)+R を横取りして二重確認（オフライン時はブロック）
 document.addEventListener("keydown", function (e) {
-  var key = (e.key || "").toLowerCase();
-  if (key === "f5" || ((e.ctrlKey || e.metaKey) && key === "r")) {
+  var k = (e.key || "").toLowerCase();
+  if (k === "f5" || ((e.ctrlKey || e.metaKey) && k === "r")) {
     e.preventDefault();
 
     if (!navigator.onLine) {
-      alert("オフラインのため、ページの更新はできません。接続後にお試しください。");
+      alert("オフラインのため、ページの更新はできません。");
       return;
     }
-    if (doubleConfirm("ページを更新しようとしています。続けますか？（1/2）",
-                      "本当に更新しますか？（2/2）")) {
+    if (multiConfirm([
+      "ページを更新しようとしています。続けますか？（{n}）",
+      "本当に更新しますか？（{n}）",
+      "※更新すると入力途中の内容は失われる可能性があります（{n}）"
+    ])) {
       location.reload();
     }
   }
-});
+}, true);
 
-// a[href] のクリックも横取りして二重確認
+// a[href] のページ移動も二重確認（オフライン時はブロック）
 document.addEventListener("click", function (e) {
   var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
   if (!a) return;
-
   var href = a.getAttribute("href");
-  if (!href || href.startsWith("javascript:")) return;
+  if (!href || href.indexOf("javascript:") === 0) return;
 
   e.preventDefault();
 
@@ -354,30 +373,23 @@ document.addEventListener("click", function (e) {
     alert("オフラインのため、他ページへの移動はできません。");
     return;
   }
-  if (doubleConfirm("このページから離れようとしています。続けますか？（1/2）",
-                    "本当に移動しますか？（2/2）")) {
+  if (multiConfirm([
+    "このページから離れようとしています。続けますか？（{n}）",
+    "本当に移動しますか？（{n}）",
+    "※未保存の内容は失われる可能性があります（{n}）"
+  ])) {
     window.location.href = href;
   }
 }, true);
 
-// 直前がリロードか判定
-try {
-  var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
-  var isReload = nav ? nav.type === "reload"
-                     : (performance.navigation && performance.navigation.type === 1);
+// ツールバーからの更新/タブ閉じ等にも注釈
+window.addEventListener("beforeunload", function (e) {
+  e.preventDefault();
+  e.returnValue = navigator.onLine
+    ? "ページを更新／移動すると、入力途中のデータは失われる可能性があります。続けますか？"
+    : "オフラインです。ページの更新／移動はできない可能性があります。続けますか？";
+});
 
-  if (isReload) {
-    setTimeout(function () {
-      // ここでローカル保存を復元するか尋ねる
-      if (confirm("ページを再読み込みしました。編集中の内容が失われた可能性があります。復元を試みますか？")) {
-        // 例：ビルダーなら前回スナップショットを読み戻す
-        // const snap = localStorage.getItem("osa_builder_snapshot");
-        // if (snap) { surveyConfig = JSON.parse(snap); renderBuilder(); }
-      }
-    }, 300);
-  }
-} catch (_) {}
- 
 document.addEventListener("DOMContentLoaded", function () {
   // ★ デバイスサイズの既定値を自動セット（なければ 15.2 × 7.8）
   if (!surveyConfig.deviceCm) surveyConfig.deviceCm = {};
