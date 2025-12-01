@@ -194,20 +194,20 @@
           </div>
         <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page"
                        data-page-index="1"
-                       style="font-size:100%"><div class="page-label">ページ 2 / 3</div><div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
+                       style="font-size:80%"><div class="page-label">ページ 2 / 3</div><div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
           <div class="vas-block" data-block-id="vas1">
             <h2>VAS</h2>
             
             <button type="button" class="vas-start-btn">入力を始める</button>
             <div class="vas-container">
-              <div class="vas-label vas-label-left">疲れを全く感じない<br>最良の感覚</div>
+              <div class="vas-label vas-label-left">疲れを全く<br>感じない<br>最良の感覚</div>
               <div class="vas-line-wrapper">
                 <div class="vas-draw-area">
                   <div class="vas-line"><div class="vas-end vas-end-left"></div><div class="vas-end vas-end-right"></div></div>
                   <canvas class="vas-canvas"></canvas>
                 </div>
               </div>
-              <div class="vas-label vas-label-right">何もできないほど疲れ切った<br>最悪の感覚</div>
+              <div class="vas-label vas-label-right">何も<br>できないほど<br>疲れ切った<br>最悪の感覚</div>
             </div>
           </div>
         <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page"
@@ -314,7 +314,7 @@
 </div></div>
 
 <script>
-const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","deviceCm":{"width":14.2,"height":6.4},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
+const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","deviceCm":{"width":13.4,"height":6.4},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く\n感じない\n最良の感覚","labelRight":"何も\nできないほど\n疲れ切った\n最悪の感覚","required":true}],"fontPercent":80},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
 const CSV_FILE_NAME = "osa_survey.csv";
 
 document.addEventListener("DOMContentLoaded", function () {
