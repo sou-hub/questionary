@@ -194,20 +194,20 @@
           </div>
         <div class="nav-buttons"><button type="button" class="btn-next nav-next" data-target-page="1">次へ</button></div></section><section class="page"
                        data-page-index="1"
-                       style="font-size:80%"><div class="page-label">ページ 2 / 3</div><div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
+                       style="font-size:100%"><div class="page-label">ページ 2 / 3</div><div class="vas-page-helper">「入力を始める」を押してから、横線をまたぐように線を引いてください。</div>
           <div class="vas-block" data-block-id="vas1">
             <h2>VAS</h2>
             
             <button type="button" class="vas-start-btn">入力を始める</button>
             <div class="vas-container">
-              <div class="vas-label vas-label-left">疲れを全く<br>感じない<br>最良の感覚</div>
+              <div class="vas-label vas-label-left">疲れを全く感じない<br>最良の感覚</div>
               <div class="vas-line-wrapper">
                 <div class="vas-draw-area">
                   <div class="vas-line"><div class="vas-end vas-end-left"></div><div class="vas-end vas-end-right"></div></div>
                   <canvas class="vas-canvas"></canvas>
                 </div>
               </div>
-              <div class="vas-label vas-label-right">何も<br>できないほど<br>疲れ切った<br>最悪の感覚</div>
+              <div class="vas-label vas-label-right">何もできないほど疲れ切った<br>最悪の感覚</div>
             </div>
           </div>
         <div class="nav-buttons"><button type="button" class="btn-back nav-prev" data-target-page="0">戻る</button><button type="button" class="btn-next nav-next" data-target-page="2">次へ</button></div></section><section class="page"
@@ -314,9 +314,70 @@
 </div></div>
 
 <script>
-const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"utf-8","deviceCm":{"width":13.4,"height":6.4},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く\n感じない\n最良の感覚","labelRight":"何も\nできないほど\n疲れ切った\n最悪の感覚","required":true}],"fontPercent":80},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
+const surveyConfig = {"title":"OSA アンケート","csvFileName":"osa_survey.csv","htmlFileName":"osa_survey_generated.html","questionsCsvEncoding":"shift_jis","deviceCm":{"width":15.2,"height":7.8},"pages":[{"id":"page1","blocks":[{"id":"time1","type":"time","label":"① 昨夜、お休みになった時刻","showApprox":true,"adjustDateOnAm":true,"required":true},{"id":"time2","type":"time","label":"② 今朝、目覚めた時刻","showApprox":true,"adjustDateOnAm":false,"required":true},{"id":"duration1","type":"duration","label":"③ 昨夜の睡眠時間","showApprox":true,"required":true}]},{"id":"page2","blocks":[{"id":"vas1","type":"vas","labelLeft":"疲れを全く感じない\n最良の感覚","labelRight":"何もできないほど疲れ切った\n最悪の感覚","required":true}]},{"id":"page3","blocks":[{"id":"osa1","type":"questionnaire","title":"OSA 質問票","hasRightLabel":true,"showChoiceMode":"text","required":true,"choices":[{"label":"非常に"},{"label":"やや"},{"label":"やや"},{"label":"非常に"}],"questions":[{"left":"1. 疲れが残っている","right":"疲れが取れている"},{"left":"16. 眠りが浅かった","right":"眠りが深かった"}]}]}]};
 const CSV_FILE_NAME = "osa_survey.csv";
 
+// 二重確認ユーティリティ
+function doubleConfirm(msg1, msg2) {
+  if (!confirm(msg1)) return false;
+  return confirm(msg2);
+}
+
+// F5 / Ctrl(⌘)+R を横取りして二重確認
+document.addEventListener("keydown", function (e) {
+  var key = (e.key || "").toLowerCase();
+  if (key === "f5" || ((e.ctrlKey || e.metaKey) && key === "r")) {
+    e.preventDefault();
+
+    if (!navigator.onLine) {
+      alert("オフラインのため、ページの更新はできません。接続後にお試しください。");
+      return;
+    }
+    if (doubleConfirm("ページを更新しようとしています。続けますか？（1/2）",
+                      "本当に更新しますか？（2/2）")) {
+      location.reload();
+    }
+  }
+});
+
+// a[href] のクリックも横取りして二重確認
+document.addEventListener("click", function (e) {
+  var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+  if (!a) return;
+
+  var href = a.getAttribute("href");
+  if (!href || href.startsWith("javascript:")) return;
+
+  e.preventDefault();
+
+  if (!navigator.onLine) {
+    alert("オフラインのため、他ページへの移動はできません。");
+    return;
+  }
+  if (doubleConfirm("このページから離れようとしています。続けますか？（1/2）",
+                    "本当に移動しますか？（2/2）")) {
+    window.location.href = href;
+  }
+}, true);
+
+// 直前がリロードか判定
+try {
+  var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+  var isReload = nav ? nav.type === "reload"
+                     : (performance.navigation && performance.navigation.type === 1);
+
+  if (isReload) {
+    setTimeout(function () {
+      // ここでローカル保存を復元するか尋ねる
+      if (confirm("ページを再読み込みしました。編集中の内容が失われた可能性があります。復元を試みますか？")) {
+        // 例：ビルダーなら前回スナップショットを読み戻す
+        // const snap = localStorage.getItem("osa_builder_snapshot");
+        // if (snap) { surveyConfig = JSON.parse(snap); renderBuilder(); }
+      }
+    }, 300);
+  }
+} catch (_) {}
+ 
 document.addEventListener("DOMContentLoaded", function () {
   // ★ デバイスサイズの既定値を自動セット（なければ 15.2 × 7.8）
   if (!surveyConfig.deviceCm) surveyConfig.deviceCm = {};
@@ -325,10 +386,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // オフライン時の更新/離脱確認
   window.addEventListener("beforeunload", function (e) {
-    if (!navigator.onLine) {
-      e.preventDefault();
-      e.returnValue = "オフラインです。ページを更新／移動しますか？";
-    }
+    e.preventDefault();
+    e.returnValue = navigator.onLine
+      ? "ページを更新／移動すると、入力途中のデータは失われる可能性があります。続けますか？"
+      : "オフラインです。ページを更新／移動できない可能性があります。続けますか？";
   });
 
   // タップ判定（スクロールとの誤タップ抑制）
@@ -346,11 +407,44 @@ document.addEventListener("DOMContentLoaded", function () {
   function pad2(n){return String(n).padStart(2,'0');}
   function fmtDate(d){return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
   function fmtDateTime(d){return fmtDate(d)+" "+pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());}
-  const today = new Date();
-  const answerDateStr = fmtDate(today);
-  const lastNight = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
-  const lastNightStr = fmtDate(lastNight);
-  const todayEl = document.getElementById("todayDate"); if (todayEl) todayEl.textContent = answerDateStr;
+  // （置き換え）日付の管理：変数化して後からも更新できるように
+function pad2(n){return String(n).padStart(2,'0');}
+function fmtDate(d){return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
+function fmtDateTime(d){return fmtDate(d)+" "+pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());}
+
+var answerDateStr = "";    // 例: 2025-12-01
+var lastNightStr  = "";    // 例: 2025-11-30
+
+function recomputeAndApplyDates() {
+  var now = new Date();
+  var newAnswer = fmtDate(now);
+  if (newAnswer !== answerDateStr) {
+    answerDateStr = newAnswer;
+    var last = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    lastNightStr = fmtDate(last);
+    // 画面最上部「本日の日付」
+    var todayEl = document.getElementById("todayDate");
+    if (todayEl) todayEl.textContent = answerDateStr;
+
+    // 時刻ブロックの（日付：…）ラベルも再計算して更新
+    document.querySelectorAll(".block-time").forEach(function(row){
+      var cfg  = blockCfgById(row.dataset.blockId) || {};
+      var btn  = row.querySelector(".am-pm-toggle");
+      var lab  = row.querySelector("[data-role='date-label']");
+      if (!lab) return;
+      var ampm = btn ? btn.dataset.value : "AM";
+      lab.textContent = cfg.adjustDateOnAm
+        ? ((ampm === "AM") ? answerDateStr : lastNightStr)
+        : answerDateStr;
+    });
+  }
+}
+
+// 初期反映
+recomputeAndApplyDates();
+
+// （追記）1分ごとに日付が変わっていないか確認し、変わっていれば再反映
+setInterval(recomputeAndApplyDates, 60 * 1000);
 
   // ページ制御（リロード後も位置維持）
   const pages = Array.from(document.querySelectorAll(".page"));
